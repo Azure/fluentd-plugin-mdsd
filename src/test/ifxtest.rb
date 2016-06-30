@@ -5,7 +5,7 @@ ENV["RTCPAL_LOG_LEVEL"] = "2"
 ENV["RTCPAL_LOG_IDENT"] = "ruby"
 
 require 'socket'
-require '../ifxext/ifxext'
+require '../lib/libifxext'
 
 testAccount = "AzLinux"
 testNameSpace = "RubyIfxExt"

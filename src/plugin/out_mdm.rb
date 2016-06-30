@@ -9,7 +9,7 @@ module Fluent
             require_relative 'omslog'
             require_relative 'oms_configuration'
             require_relative 'oms_common'
-            require_relative 'ifxext'
+            require_relative 'libifxext'
             require 'time'
             ENV["RTCPAL_LOG_LEVEL"] = "2"
             ENV["RTCPAL_LOG_IDENT"] = "ruby"
