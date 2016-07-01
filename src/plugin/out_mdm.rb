@@ -91,7 +91,7 @@ module Fluent
             mdm2dkey = objname + "::" + itemname
             m = @@mdm2dtable[mdm2dkey]
             if m == nil
-                @@mdm2dtable[mdm2dkey] = Ifxext::Mdm2D.new(mdm_account, objname, itemname, "Hostname", "InstanceName")
+                @@mdm2dtable[mdm2dkey] = Libifxext::Mdm2D.new(mdm_account, objname, itemname, "Hostname", "InstanceName")
                 m = @@mdm2dtable[mdm2dkey]
             end
             m.LogValueAtTime(timeticks, itemvalue.to_i(), hostname, dimval2)

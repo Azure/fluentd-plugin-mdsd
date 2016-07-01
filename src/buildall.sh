@@ -160,7 +160,7 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 
 InstallPkgs
 BuildWithCMake
-#BuildWithMake package
+BuildWithMake package
 
 echo
 echo Finished all builds at `date`. error = ${TotalErrors}

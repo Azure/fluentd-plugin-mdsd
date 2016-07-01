@@ -1,0 +1,6 @@
+PACKAGE: unstripped-binary-or-object
+# dir-or-file-in-opt is not overridable.
+#PACKAGE: dir-or-file-in-opt
+PACKAGE: debian-changelog-file-missing-or-wrong-name
+PACKAGE: non-standard-executable-perm
+PACKAGE: executable-not-elf-or-script
