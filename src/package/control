@@ -1,0 +1,11 @@
+Package: PACKAGE
+Version: VERSION
+Section: libs
+Priority: optional
+Architecture: amd64
+Depends: DEPENDS
+Maintainer: Azure Linux Team <azlinux@microsoft.com>
+Description: Fluentd output plugin for MDM
+ This includes fluentd output plugin for IfxMetrics API,
+ which sends data to Azure Multi-Metrics-Monitoring (MDM)
+ agent and sevice.

@@ -1,0 +1,6 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: http://msazure.visualstudio.com/One/Linux/_git/Compute-Runtime-Tux-fluentd
+
+Files: *
+Copyright: 2016 Microsoft Corporation
+License: Microsoft Internal Use ONLY
