@@ -1820,10 +1820,10 @@ static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    Init_ifxext
-#define SWIG_name    "Ifxext"
+#define SWIG_init    Init_libifxext
+#define SWIG_name    "Libifxext"
 
-static VALUE mIfxext;
+static VALUE mLibifxext;
 
 #define SWIG_RUBY_THREAD_BEGIN_BLOCK
 #define SWIG_RUBY_THREAD_END_BLOCK
@@ -3422,11 +3422,11 @@ SWIG_PropagateClientData(void) {
 #ifdef __cplusplus
 extern "C"
 #endif
-SWIGEXPORT void Init_ifxext(void) {
+SWIGEXPORT void Init_libifxext(void) {
   size_t i;
   
   SWIG_InitRuntime();
-  mIfxext = rb_define_module("Ifxext");
+  mLibifxext = rb_define_module("Libifxext");
   
   SWIG_InitializeModule(0);
   for (i = 0; i < swig_module.size; i++) {
@@ -3435,7 +3435,7 @@ SWIGEXPORT void Init_ifxext(void) {
   
   SWIG_RubyInitializeTrackings();
   
-  SwigClassMdm0D.klass = rb_define_class_under(mIfxext, "Mdm0D", rb_cObject);
+  SwigClassMdm0D.klass = rb_define_class_under(mLibifxext, "Mdm0D", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_Mdm0D, (void *) &SwigClassMdm0D);
   rb_define_alloc_func(SwigClassMdm0D.klass, _wrap_Mdm0D_allocate);
   rb_define_method(SwigClassMdm0D.klass, "initialize", VALUEFUNC(_wrap_new_Mdm0D), -1);
@@ -3445,7 +3445,7 @@ SWIGEXPORT void Init_ifxext(void) {
   SwigClassMdm0D.destroy = (void (*)(void *)) free_Mdm0D;
   SwigClassMdm0D.trackObjects = 0;
   
-  SwigClassMdm1D.klass = rb_define_class_under(mIfxext, "Mdm1D", rb_cObject);
+  SwigClassMdm1D.klass = rb_define_class_under(mLibifxext, "Mdm1D", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_Mdm1D, (void *) &SwigClassMdm1D);
   rb_define_alloc_func(SwigClassMdm1D.klass, _wrap_Mdm1D_allocate);
   rb_define_method(SwigClassMdm1D.klass, "initialize", VALUEFUNC(_wrap_new_Mdm1D), -1);
@@ -3455,7 +3455,7 @@ SWIGEXPORT void Init_ifxext(void) {
   SwigClassMdm1D.destroy = (void (*)(void *)) free_Mdm1D;
   SwigClassMdm1D.trackObjects = 0;
   
-  SwigClassMdm2D.klass = rb_define_class_under(mIfxext, "Mdm2D", rb_cObject);
+  SwigClassMdm2D.klass = rb_define_class_under(mLibifxext, "Mdm2D", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_Mdm2D, (void *) &SwigClassMdm2D);
   rb_define_alloc_func(SwigClassMdm2D.klass, _wrap_Mdm2D_allocate);
   rb_define_method(SwigClassMdm2D.klass, "initialize", VALUEFUNC(_wrap_new_Mdm2D), -1);

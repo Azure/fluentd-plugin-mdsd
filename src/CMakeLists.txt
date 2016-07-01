@@ -49,3 +49,5 @@ set(RUBY_INC_PATH /opt/microsoft/omsagent/ruby/include/ruby-2.2.0)
 option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
 
 add_subdirectory(ifxext)
+add_subdirectory(plugin)
+add_subdirectory(test)

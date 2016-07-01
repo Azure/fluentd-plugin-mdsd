@@ -15,7 +15,7 @@ dim2 = "ProcessorName"
 
 myComputename = Socket.gethostname()
 
-x = Ifxext::Mdm2D.new(testAccount, testNameSpace, testMetric, dim1, dim2)
+x = Libifxext::Mdm2D.new(testAccount, testNameSpace, testMetric, dim1, dim2)
 mdmmethods = (x.methods - Object.methods)
 puts "Mdm2D methods: #{mdmmethods}"
 
