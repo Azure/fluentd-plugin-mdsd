@@ -1820,7 +1820,7 @@ static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    Init_libifxext
+#define SWIG_init    Init_Libifxext
 #define SWIG_name    "Libifxext"
 
 static VALUE mLibifxext;
@@ -3422,7 +3422,7 @@ SWIG_PropagateClientData(void) {
 #ifdef __cplusplus
 extern "C"
 #endif
-SWIGEXPORT void Init_libifxext(void) {
+SWIGEXPORT void Init_Libifxext(void) {
   size_t i;
   
   SWIG_InitRuntime();

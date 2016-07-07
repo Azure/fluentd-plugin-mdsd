@@ -1,4 +1,4 @@
-%module libifxext
+%module Libifxext
 
 %{
 #include "ifxext.h"
