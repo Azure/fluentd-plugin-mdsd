@@ -7,18 +7,16 @@
 TotalErrors=0
 
 BuildType=
-CCompiler=
-CXXCompiler=
+CCompiler=gcc
+CXXCompiler=g++
 BuildName=
 BUILDDIR=builddir
 
 Usage()
 {
-    echo "Usage: $0 <-d|-o> <-c|-g> [-b buildname] [-h]"
+    echo "Usage: $0 <-d|-o> [-b buildname] [-h]"
     echo "    -b: use buildname. Default: timestamp."
-    echo "    -c: use clang compiler."
     echo "    -d: build debug build."
-    echo "    -g: use gcc/g++ compiler."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
 }
@@ -38,18 +36,7 @@ SetBuildType()
     fi
 }
 
-SetCompilers()
-{
-    if [ -z "${CCompiler}" ]; then
-        CCompiler=$1
-        CXXCompiler=$2
-    else
-        echo "Error: compiler is already set to ${CCompiler}."
-        exit 1
-    fi
-}
-
-args=`getopt b:cdgho $*`
+args=`getopt b:dho $*`
 if [ $? != 0 ]; then
     Usage
     exit 1
@@ -61,14 +48,8 @@ for i; do
         -b)
             BuildName=$2
             shift ; shift ;;
-        -c)
-            SetCompilers clang clang++
-            shift ;;
         -d)
             SetBuildType Debug
-            shift ;;
-        -g)
-            SetCompilers gcc g++
             shift ;;
         -h)
             Usage
@@ -86,21 +67,16 @@ if [ -z "${BuildType}" ]; then
     exit 1
 fi
 
-if [ -z "${CCompiler}" ]; then
-    echo "Error: missing compiler type."
-    exit 1
-fi
-
 # Install any required packages that docker image don't have yet
 # After the docker image has this, this should be removed.
 InstallPkgs()
 {
     echo "Search required pkg. If not found, install it ..."
-#    dpkg -L <pkgname>
-#    if [ $? != 0 ]; then
-#        sudo apt-get update
-#        sudo apt-get install -y <pkgname>
-#    fi
+    dpkg -L libazurepal-dev > /dev/null
+    if [ $? != 0 ]; then
+        sudo apt-get update
+        sudo apt-get install -y libazurepal-dev
+    fi
 }
 
 BuildWithCMake()
@@ -156,10 +132,25 @@ BuildWithMake()
     fi
 }
 
+ParseGlibcVer()
+{
+    glibcver=2.7  # max GLIBC version to support
+    dirname=./builddir/release/lib
+    echo
+    echo python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
+    python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
+    if [ $? != 0 ]; then
+        let TotalErrors+=1
+        echo Error: ParseGlibcVer failed: maximum supported GLIBC version is ${glibcver}.
+        exit ${TotalErrors}
+    fi
+}
+
 echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 
 InstallPkgs
 BuildWithCMake
+ParseGlibcVer
 BuildWithMake package
 
 echo

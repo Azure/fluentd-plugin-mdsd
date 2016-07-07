@@ -1,6 +1,9 @@
 set(PAL_INC_PATH "/usr/include/azurepal")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNICODE")
 
+# To force using memcpy@GLIBC_2.2.5 (for old Linux distro versions)
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--wrap=memcpy")
+
 include_directories(
     ${PAL_INC_PATH}
     ${PAL_INC_PATH}/unix/winapi
@@ -19,10 +22,11 @@ set(SOURCES
 set(IFXEXT_LIB ifxext)
 
 add_library(${IFXEXT_LIB} ${SOURCES})
+SET_TARGET_PROPERTIES(${IFXEXT_LIB} PROPERTIES PREFIX "Lib")
 
 target_link_libraries(${IFXEXT_LIB}
-    rtcpal
-    IfxMetrics
+    /usr/lib/x86_64-linux-gnu/libIfxMetrics_static.a
+    /usr/lib/x86_64-linux-gnu/librtcpal_static.a
 )
 
 install(TARGETS ${IFXEXT_LIB}

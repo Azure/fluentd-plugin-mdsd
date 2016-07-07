@@ -6,19 +6,14 @@ module Fluent
 
         def initialize
             super
-            require_relative 'omslog'
-            require_relative 'oms_configuration'
-            require_relative 'oms_common'
-            require_relative 'libifxext'
+            require_relative 'Libifxext'
             require 'time'
+            # For debug purpose only
             ENV["RTCPAL_LOG_LEVEL"] = "2"
             ENV["RTCPAL_LOG_IDENT"] = "ruby"
             @@mdm2dtable = {}
         end
 
-        config_param :omsadmin_conf_path, :string, :default => '/etc/opt/microsoft/omsagent/conf/omsadmin.conf'
-        config_param :cert_path, :string, :default => '/etc/opt/microsoft/omsagent/certs/oms.crt'
-        config_param :key_path, :string, :default => '/etc/opt/microsoft/omsagent/certs/oms.key'
         config_param :mdm_account, :string
 
         def configure(conf)
@@ -44,11 +39,6 @@ module Fluent
         # This method is called every flush interval. Send the buffer chunk to OMS. 
         # 'chunk' is a buffer chunk that includes multiple formatted events.
         def write(chunk)
-            # Quick exit if we are missing something
-            #if !OMS::Configuration.load_configuration(omsadmin_conf_path, cert_path, key_path)
-            #    raise 'Missing configuration. Make sure to onboard. Will continue to buffer data.'
-            #end
-
             # handle OMI datatype only
             chunk.msgpack_each {|(tag, record)|
                 if tag == 'oms.omi'
@@ -79,22 +69,24 @@ module Fluent
             }
         end
 
+        # Create a new MDM value with objname as Mdm namespace, counter name as metrics Name,
+        # Counter value as metrics raw value.
         # examples:
-        # computer1, Memory, Memory, "Available MBytes Memory", 1023
-        # computer2, Processor, 1, "% Processor Time", 3
-        def handle_metrix(timeticks, hostname, objname, instname, itemname, itemvalue)
-            @log.debug "Metrix: Name: #{itemname}; Value: #{itemvalue}"
+        # ticks, computer1, Memory, Memory, "Available MBytes Memory", 1023
+        # ticks, computer2, Processor, 1, "% Processor Time", 3
+        def handle_metrix(timeticks, hostname, objname, instname, countername, countervalue)
+            @log.debug "Metrix: Name: #{countername}; Value: #{countervalue}"
             dimval2 = objname
             if objname != instname
                 dimval2 += instname
             end
-            mdm2dkey = objname + "::" + itemname
+            mdm2dkey = objname + "::" + countername
             m = @@mdm2dtable[mdm2dkey]
             if m == nil
-                @@mdm2dtable[mdm2dkey] = Libifxext::Mdm2D.new(mdm_account, objname, itemname, "Hostname", "InstanceName")
+                @@mdm2dtable[mdm2dkey] = Libifxext::Mdm2D.new(mdm_account, objname, countername, "Hostname", "InstanceName")
                 m = @@mdm2dtable[mdm2dkey]
             end
-            m.LogValueAtTime(timeticks, itemvalue.to_i(), hostname, dimval2)
+            m.LogValueAtTime(timeticks, countervalue.to_i(), hostname, dimval2)
         end
 
         # Get number of ticks for a given UTC time since 1601/01/01 00:00:00.

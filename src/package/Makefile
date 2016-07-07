@@ -87,7 +87,7 @@ install-clean:
 
 install-deps: install-clean	
 	mkdir -p $(PLUGINDIR)
-	cp -f -P $(RELDIR)/lib/libifxext.so $(PLUGINDIR)
-	cp -f -P $(RELDIR)/plugin/out_mdm.rb $(PLUGINDIR)
-	chmod 0744 $(PLUGINDIR)/libifxext.so
-	chmod 0744 $(PLUGINDIR)/out_mdm.rb
+	cp -f -P $(RELDIR)/lib/*.so $(PLUGINDIR)
+	cp -f -P $(RELDIR)/plugin/*.rb $(PLUGINDIR)
+	chmod 0744 $(PLUGINDIR)/*.so
+	chmod 0744 $(PLUGINDIR)/*.rb
