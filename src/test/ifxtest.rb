@@ -22,9 +22,9 @@ puts "Mdm2D methods: #{mdmmethods}"
 (1..4).each {|i|
     r = x.LogValue(200+i, myComputename, "CPU" + (i%4).to_s)
     puts "LogValue #{i} returns #{r}"
-    sleep(1)
+    sleep(0.1)
 
     r2 = x.LogValueAtTime(131116247046770000, 200+i, myComputename, "CPU" + (i%4).to_s)
     puts "LogValueAtTime #{i} returns #{r}"
-    sleep(1)
+    sleep(0.1)
 }
