@@ -25,8 +25,8 @@ add_library(${IFXEXT_LIB} ${SOURCES})
 SET_TARGET_PROPERTIES(${IFXEXT_LIB} PROPERTIES PREFIX "Lib")
 
 target_link_libraries(${IFXEXT_LIB}
-    /usr/lib/x86_64-linux-gnu/libIfxMetrics_static.a
-    /usr/lib/x86_64-linux-gnu/librtcpal_static.a
+    /usr/lib/x86_64-linux-gnu/libIfxMetrics.a
+    /usr/lib/x86_64-linux-gnu/librtcpal.a
 )
 
 install(TARGETS ${IFXEXT_LIB}
