@@ -2,7 +2,7 @@
 # Only OMI data are supported.
 module Fluent
     class OutputMDM < BufferedOutput
-        Plugin.register_output('out_mdm', self)
+        Plugin.register_output('mdm', self)
 
         def initialize
             super
@@ -22,10 +22,12 @@ module Fluent
 
         def start
             super
+            Libifxext::MdmStartup()
         end
 
         def shutdown
             super
+            Libifxext::MdmCleanup()
         end
 
         # This method is called when an event reaches to Fluentd.
