@@ -8,5 +8,8 @@ $(MDMGEM): fluent-plugin-mdm.gemspec lib/fluent/plugin/out_mdm.rb
 	cp -f ../builddir/release/lib/Libifxext.so lib/fluent/plugin/Libifxext.so
 	$(GEM) build fluent-plugin-mdm.gemspec
 
+install:
+	$(GEM) install $(MDMGEM)*.gem
+
 clean:
 	rm -rf *.gem
