@@ -15,17 +15,4 @@ This is fluentd output plugin for Azure Linux MDM (Multi-Metrics-Monitoring), th
 
 ###Configuration
 
-    <match oms.omi>
-        type out_mdm
-        log_level debug
-        num_threads 1
-        buffer_chunk_limit 1m
-        buffer_type file
-        buffer_path /var/opt/microsoft/omsagent/state/out_mdm*.buffer
-        buffer_queue_limit 10
-        flush_interval 20s
-        retry_limit 10
-        retry_wait 30s
-        mdm_account "AzLinux"
-    </match>
-
+<a href="src/fluent-plugin-mdm/out_mdm_sample.conf">See configuration sample</a>

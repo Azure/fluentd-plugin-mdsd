@@ -43,11 +43,11 @@ module Fluent
         def write(chunk)
             # handle OMI datatype only
             chunk.msgpack_each {|(tag, record)|
-                if tag == 'oms.omi'
-                    @log.debug "Start to process #{tag} data ..."
-                    handle_record(record)
+                datatype = record["DataType"]
+                if datatype != "LINUX_PERF_BLOB"
+                    @log.error "Error: unsupported data type #{datatype} for tag #{tag}. Ignore data."
                 else
-                    @log.error "Error: unsupported tag #{tag}. Ignore data."
+                    handle_record(record)
                 end
             }
         end
@@ -77,11 +77,11 @@ module Fluent
         # ticks, computer1, Memory, Memory, "Available MBytes Memory", 1023
         # ticks, computer2, Processor, 1, "% Processor Time", 3
         def handle_metrix(timeticks, hostname, objname, instname, countername, countervalue)
-            @log.debug "Metrix: Name: #{countername}; Value: #{countervalue}"
             dimval2 = objname
             if objname != instname
                 dimval2 += instname
             end
+            @log.debug "Instance: #{dimval2}; Metrix: #{countername}; V: #{countervalue}"
             mdm2dkey = objname + "::" + countername
             m = @@mdm2dtable[mdm2dkey]
             if m == nil
