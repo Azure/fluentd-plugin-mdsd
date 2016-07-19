@@ -5,6 +5,19 @@
 // debug purpose. todo: remove this later.
 static const char* modTag = "IFXRuby";
 
+uint32_t
+MdmStartup()
+{
+    return IfxStartup();
+}
+
+void
+MdmCleanup()
+{
+    return IfxCleanup();
+}
+
+
 Mdm0D::Mdm0D(
     const std::string & monitoringAccount,
     const std::string & metricNamespace,

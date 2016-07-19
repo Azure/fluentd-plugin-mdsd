@@ -1849,6 +1849,33 @@ static VALUE mLibifxext;
 #include <string>
 
 
+#include <limits.h>
+#if !defined(SWIG_NO_LLONG_MAX)
+# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
+#   define LLONG_MAX __LONG_LONG_MAX__
+#   define LLONG_MIN (-LLONG_MAX - 1LL)
+#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+# endif
+#endif
+
+
+  #define SWIG_From_long   LONG2NUM 
+
+
+SWIGINTERNINLINE VALUE
+SWIG_From_unsigned_SS_long  (unsigned long value)
+{
+  return ULONG2NUM(value); 
+}
+
+
+SWIGINTERNINLINE VALUE
+SWIG_From_unsigned_SS_int  (unsigned int value)
+{    
+  return SWIG_From_unsigned_SS_long  (value);
+}
+
+
 SWIGINTERN swig_type_info*
 SWIG_pchar_descriptor(void)
 {
@@ -1925,16 +1952,6 @@ SWIG_AsPtr_std_string (VALUE obj, std::string **val)
   }
   return SWIG_ERROR;
 }
-
-
-#include <limits.h>
-#if !defined(SWIG_NO_LLONG_MAX)
-# if !defined(LLONG_MAX) && defined(__GNUC__) && defined (__LONG_LONG_MAX__)
-#   define LLONG_MAX __LONG_LONG_MAX__
-#   define LLONG_MIN (-LLONG_MAX - 1LL)
-#   define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
-# endif
-#endif
 
 
 SWIGINTERN VALUE
@@ -2038,9 +2055,6 @@ SWIG_AsVal_long_SS_long (VALUE obj, long long *val)
 }
 
 
-  #define SWIG_From_long   LONG2NUM 
-
-
 /*@SWIG:/usr/share/swig3.0/ruby/rubyprimtypes.swg,19,%ruby_aux_method@*/
 SWIGINTERN VALUE SWIG_AUX_NUM2ULL(VALUE *args)
 {
@@ -2068,6 +2082,34 @@ SWIG_AsVal_unsigned_SS_long_SS_long (VALUE obj, unsigned long long *val)
   }
   return SWIG_TypeError;
 }
+
+SWIGINTERN VALUE
+_wrap_MdmStartup(int argc, VALUE *argv, VALUE self) {
+  uint32_t result;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 0) || (argc > 0)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
+  }
+  result = (uint32_t)MdmStartup();
+  vresult = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_MdmCleanup(int argc, VALUE *argv, VALUE self) {
+  if ((argc < 0) || (argc > 0)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
+  }
+  MdmCleanup();
+  return Qnil;
+fail:
+  return Qnil;
+}
+
 
 static swig_class SwigClassMdm0D;
 
@@ -3434,6 +3476,8 @@ SWIGEXPORT void Init_Libifxext(void) {
   }
   
   SWIG_RubyInitializeTrackings();
+  rb_define_module_function(mLibifxext, "MdmStartup", VALUEFUNC(_wrap_MdmStartup), -1);
+  rb_define_module_function(mLibifxext, "MdmCleanup", VALUEFUNC(_wrap_MdmCleanup), -1);
   
   SwigClassMdm0D.klass = rb_define_class_under(mLibifxext, "Mdm0D", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_Mdm0D, (void *) &SwigClassMdm0D);
