@@ -17,6 +17,7 @@ include_directories(
 set(SOURCES
     ifxext.cxx
     ifxext_wrap.cxx
+    wrap_memcpy.c
 )
 
 set(IFXEXT_LIB ifxext)

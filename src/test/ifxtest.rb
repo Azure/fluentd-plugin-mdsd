@@ -15,6 +15,8 @@ dim2 = "ProcessorName"
 
 myComputename = Socket.gethostname()
 
+Libifxext::MdmStartup()
+
 x = Libifxext::Mdm2D.new(testAccount, testNameSpace, testMetric, dim1, dim2)
 mdmmethods = (x.methods - Object.methods)
 puts "Mdm2D methods: #{mdmmethods}"
@@ -28,3 +30,5 @@ puts "Mdm2D methods: #{mdmmethods}"
     puts "LogValueAtTime #{i} returns #{r}"
     sleep(0.1)
 }
+
+Libifxext::MdmCleanup()
