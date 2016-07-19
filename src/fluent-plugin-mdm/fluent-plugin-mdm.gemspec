@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
     s.email = "liwei.peng@microsoft.com"
     s.files = ["lib/fluent/plugin/out_mdm.rb",
                "lib/fluent/plugin/Libifxext.so",
-               "Gemfile",
-               "fluent-plugin-mdm.gemspec"
+               "fluent-plugin-mdm.gemspec",
+               "out_mdm_sample.conf"
               ]
     s.homepage = "https://msazure.visualstudio.com/One/Linux/_git/Compute-Runtime-Tux-fluentd"
     s.license = "Microsoft Internal Only"
