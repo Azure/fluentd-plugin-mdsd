@@ -3,6 +3,9 @@
 
 #include <string>
 
+uint32_t MdmStartup();
+void MdmCleanup();
+
 class Mdm0D {
 public:
     Mdm0D(const std::string & monitoringAccount,

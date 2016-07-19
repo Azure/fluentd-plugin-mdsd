@@ -115,23 +115,6 @@ BuildWithCMake()
     popd
 }
 
-# usage: BuildWithMake <dir>
-BuildWithMake()
-{
-    echo
-    echo Start to build: directory=$1 compiler=${CCompiler} ...
-    make -C $1 clean CC=${CCompiler}
-    make -C $1 CC=${CCompiler} LABEL=build.${BuildName}
-
-    if [ $? != 0 ]; then
-        let TotalErrors+=1
-        echo Error: build $1 failed
-        exit ${TotalErrors}
-    else
-        echo Finished built successfully: directory=$1
-    fi
-}
-
 ParseGlibcVer()
 {
     glibcver=2.7  # max GLIBC version to support
@@ -151,7 +134,6 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 InstallPkgs
 BuildWithCMake
 ParseGlibcVer
-BuildWithMake package
 
 echo
 echo Finished all builds at `date`. error = ${TotalErrors}
