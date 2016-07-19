@@ -9,13 +9,11 @@ TotalErrors=0
 BuildType=
 CCompiler=gcc
 CXXCompiler=g++
-BuildName=
 BUILDDIR=builddir
 
 Usage()
 {
-    echo "Usage: $0 <-d|-o> [-b buildname] [-h]"
-    echo "    -b: use buildname. Default: timestamp."
+    echo "Usage: $0 <-d|-o> [-h]"
     echo "    -d: build debug build."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
@@ -36,7 +34,7 @@ SetBuildType()
     fi
 }
 
-args=`getopt b:dho $*`
+args=`getopt dho $*`
 if [ $? != 0 ]; then
     Usage
     exit 1
@@ -45,9 +43,6 @@ set -- $args
 
 for i; do
     case "$i" in
-        -b)
-            BuildName=$2
-            shift ; shift ;;
         -d)
             SetBuildType Debug
             shift ;;
@@ -115,6 +110,23 @@ BuildWithCMake()
     popd
 }
 
+# usage: BuildWithMake <dir>
+BuildWithMake()
+{
+    echo
+    echo Start to build: directory=$1 ...
+    make -C $1 clean
+    make -C $1
+
+    if [ $? != 0 ]; then
+        let TotalErrors+=1
+        echo Error: build $1 failed
+        exit ${TotalErrors}
+    else
+        echo Finished built successfully: directory=$1
+    fi
+}
+
 ParseGlibcVer()
 {
     glibcver=2.7  # max GLIBC version to support
@@ -134,6 +146,7 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 InstallPkgs
 BuildWithCMake
 ParseGlibcVer
+BuildWithMake fluent-plugin-mdm
 
 echo
 echo Finished all builds at `date`. error = ${TotalErrors}
