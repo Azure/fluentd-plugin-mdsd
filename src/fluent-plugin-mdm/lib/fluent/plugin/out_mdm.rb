@@ -1,5 +1,4 @@
 # This is MDM output plugin: data will be sent to MDM through IFX API.
-# Only OMI data are supported.
 module Fluent
     class OutputMDM < BufferedOutput
         Plugin.register_output('mdm', self)
@@ -41,7 +40,6 @@ module Fluent
         # This method is called every flush interval. Send the buffer chunk to OMS. 
         # 'chunk' is a buffer chunk that includes multiple formatted events.
         def write(chunk)
-            # handle OMI datatype only
             chunk.msgpack_each {|(tag, record)|
                 datatype = record["DataType"]
                 if datatype != "LINUX_PERF_BLOB"
