@@ -70,7 +70,7 @@ ConcurrentMap::Get(
     return item->second;
 }
 
-void
+size_t
 ConcurrentMap::Erase(
     const std::string & key
     )
@@ -80,22 +80,27 @@ ConcurrentMap::Erase(
     std::lock_guard<std::mutex> lk(m_cacheMutex);
     auto nErased = m_cache.erase(key);
     Log(TraceLevel::Trace, "Erase(): key='" << key << "'; nErased=" << nErased);
+    return nErased;
 }
 
-void
+size_t
 ConcurrentMap::Erase(
     const std::vector<std::string> & keylist
     )
 {
     if (keylist.empty()) {
-        return;
+        return 0;
     }
 
+    size_t nTotal = 0;
     std::lock_guard<std::mutex> lk(m_cacheMutex);
     for(const auto & key : keylist) {
         auto nErased = m_cache.erase(key);
         Log(TraceLevel::Trace, "Erase(): key='" << key << "'; nErased=" << nErased);
+        nTotal += nErased;
     }
+
+    return nTotal;
 }
 
 size_t

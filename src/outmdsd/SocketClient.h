@@ -64,20 +64,23 @@ public:
     /// If the socket fd is not valid, wait until timeout.
     /// Socket will be closed if any socket error is found, or EOF is reached.
     /// Throw exception for any error.
-    /// Return number of bytes read.
+    /// Return number of bytes read. or -1 if the SocketClient is already stopped.
     /// </summary>
     /// <param name='buf'>buffer where data will be saved. The caller must make sure 
     /// that 'buf' is valid and  it has at least bufsize space. </param>
     /// <param name='count'>max number of bytes to read</param>
     /// <param name='timeoutMS'>milli-seconds to wait before timeout if socket fd
     /// is invalid.</param>
-    size_t Read(void* buf, size_t count, int timeoutMS = 60*1000);
+    ssize_t Read(void* buf, size_t count, int timeoutMS = 60*1000);
 
     /// <summary>
-    /// Send a data buffer to the socket.
-    ///
+    /// Send a data buffer to the socket. If 'len' is 0, do nothing.
     /// The caller must make sure 'buf' is valid.
-    /// If connection fails, socket will be closed.
+    ///
+    /// If socket is not connected, Send() will try in a loop to set up connection.
+    /// The max time trying to set up the connection is connRetryTimeoutMS.
+    ///
+    /// if Send() fails at runtime, socket will be closed.
     /// Throw exception for any error.
     ///</summary>
     void Send(const void* buf, size_t len);
@@ -85,6 +88,7 @@ public:
     /// <summary>
     /// Send data string to the socket. Send all the data until a terminal NUL is hit.
     /// The NUL char is not sent.
+    /// If string is empty, do nothing.
     /// Throw exception for any error.
     /// </summary>
     void Send(const char* data);
@@ -119,17 +123,7 @@ private:
     /// Throw exception for any error.
     /// </summary>
     /// <param name="pollMode"> poll() events value. e.g. POLLIN, POLLOUT, etc</param>
-    /// <param name="abortPollFd">event fd used to abort poll() when necessary</param>
-    void PollSocket(short pollMode, int abortPollFd);
-
-    /// Create an event fd used to break blocking poll() on send().
-    void CreateAbortSendEventFD();
-
-    /// Create an event fd used to break blocking poll() on read().
-    void CreateAbortReadEventFD();
-
-    /// write an event to given eventfd to abort blocking poll() if any.
-    static void AbortBlockingPoll(int eventfd) noexcept;
+    void PollSocket(short pollMode);
 
 private:
     constexpr static int INVALID_SOCKET = -1;
@@ -143,11 +137,9 @@ private:
     struct timeval m_lastConnTime; // last time to create a new socket. used for delay policy.
 
     // SocketClient has several APIs that'll block for certain things to be ready. For example,
-    // poll() for I/O, and Read() for valid socket fd, m_stopClient and eventfds are used
+    // poll() for I/O, and Read() for valid socket fd, m_stopClient is used
     // to make sure these blocking APIs can be interrupted immediately.
     std::atomic<bool> m_stopClient{false}; // atomic flag to stop further operations.
-    int m_abortSendEventFD = -1; // event fd used to break blocking poll() on send().
-    int m_abortReadEventFD = -1; // eventfd used to break blocking poll() on read().
 
     // signal when sock fd is ready to use. This is used when some thread(s) are waiting
     // for the sock fd to be ready (e.g. Read() API).
