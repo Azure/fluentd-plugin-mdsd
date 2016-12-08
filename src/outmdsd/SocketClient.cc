@@ -1,10 +1,12 @@
 extern "C" {
 #include <unistd.h>
-#include <sys/eventfd.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <assert.h>
 }
 
+
+#include <algorithm>
 #include "SocketClient.h"
 #include "SockAddr.h"
 #include "Exceptions.h"
@@ -22,9 +24,6 @@ SocketClient::SocketClient(
 {
     m_lastConnTime.tv_sec = 0;
     m_lastConnTime.tv_usec = 0;
-
-    CreateAbortSendEventFD();
-    CreateAbortReadEventFD();
 }
 
 SocketClient::SocketClient(
@@ -42,17 +41,6 @@ SocketClient::~SocketClient()
 {
     try {
         Stop();
-        Close();
-
-        if (-1 != m_abortSendEventFD) {
-            close(m_abortSendEventFD);
-            m_abortSendEventFD = -1;
-        }
-
-        if (-1 != m_abortReadEventFD) {
-            close(m_abortReadEventFD);
-            m_abortReadEventFD = -1;
-        }
     }
     catch(const std::exception & ex) {
         Log(TraceLevel::Error, "~SocketClient() exception: " << ex.what());
@@ -71,10 +59,8 @@ SocketClient::Stop()
         m_stopClient = true;
         m_connCV.notify_all();
         connlk.unlock();
-
-        AbortBlockingPoll(m_abortSendEventFD);
-        AbortBlockingPoll(m_abortReadEventFD);
     }
+    Close();
 }
 
 void
@@ -89,7 +75,7 @@ SocketClient::SetupSocketConnect()
     (void) gettimeofday(&m_lastConnTime, 0);
     m_numConnect++;
 
-    auto sockRtn = socket(m_sockaddr->GetDomain(), SOCK_STREAM, 0);
+    auto sockRtn = socket(m_sockaddr->GetDomain(), SOCK_STREAM | O_NONBLOCK, 0);
     if (-1 == sockRtn) {
         throw SocketException(errno, "SocketClient socket()");
     }
@@ -183,17 +169,21 @@ SocketClient::Close()
     std::lock_guard<std::mutex> lock(m_fdMutex);
 
     if (INVALID_SOCKET != m_sockfd) {
-        Log(TraceLevel::Debug, "close sockfd=" << m_sockfd);
+        Log(TraceLevel::Debug, "shutdown and close sockfd=" << m_sockfd);
+        // In multi-threads, poll() can get shutdown() event, but poll()
+        // may not get close() event. see man 2 select.
+        // shutdown should use SHUT_RDWR mode because PollSocket() can do
+        // either POLLIN or POLLOUT.
+        shutdown(m_sockfd, SHUT_RDWR);
         close(m_sockfd);
         m_sockfd = INVALID_SOCKET;
     }
 }
 
-size_t
+ssize_t
 SocketClient::Read(void* buf, size_t count, int timeoutMS)
 {
     ADD_TRACE_TRACE;
-    assert(m_abortReadEventFD >= 0);
 
     if (!buf) {
         throw std::invalid_argument("SocketClient::Read(): NULL pointer for buffer");
@@ -202,25 +192,31 @@ SocketClient::Read(void* buf, size_t count, int timeoutMS)
         throw std::invalid_argument("SocketClient::Read(): read count cannot be 0.");
     }
     if (m_stopClient) {
-        return 0;
+        Log(TraceLevel::Debug, "SocketClient is already stopped.");
+        return -1;
     }
 
     WaitForSocketToBeReady(timeoutMS);
 
     if (m_stopClient) {
-        return 0;
+        Log(TraceLevel::Debug, "SocketClient is already stopped.");
+        return -1;
     }
 
     ssize_t readRet = 0;
 
     try {
-        // todo: handle m_sockfd change in other threads
-        PollSocket(POLLIN, m_abortReadEventFD);
+        PollSocket(POLLIN);
 
         while (-1 == (readRet = read(m_sockfd, buf, count)) && EINTR == errno) {}
-
         if (readRet < 0) {
-            throw SocketException(errno, "SocketClient read()");
+            if (EAGAIN == errno || EWOULDBLOCK == errno) {
+                Log(TraceLevel::Trace, "SocketClient retry read()");
+                readRet = 0;
+            }
+            else {
+                throw SocketException(errno, "SocketClient read()");
+            }
         }
         else if (0 == readRet) {
             // when the other socket side connection is closed, read() returns 0.
@@ -244,6 +240,8 @@ SocketClient::SendData(
     size_t len
     )
 {
+    ADD_TRACE_TRACE;
+
     size_t total = 0;        // how many bytes we've sent
     size_t bytesleft = len;
     ssize_t rtn = 0;
@@ -255,16 +253,24 @@ SocketClient::SendData(
         throw std::invalid_argument("SocketClient SendData(): unexpected NULL for buf pointer.");
     }
     if (0 == len) {
-        throw std::invalid_argument("SocketClient SendData(): length cannot be 0.");
+        return;
     }
 
-    while(!m_stopClient && total < len) {
-        PollSocket(POLLOUT, m_abortSendEventFD);
+    std::lock_guard<std::mutex> lck(m_sendMutex);
+    while(!m_stopClient && bytesleft) {
+        PollSocket(POLLOUT);
         // Because the default behavior for SIGPIPE signal is to terminate the process,
         // use MSG_NOSIGNAL so that no SIGPIPE signal is created on errors.
         while (-1 == (rtn = send(m_sockfd, ((char*)buf)+total, bytesleft, MSG_NOSIGNAL)) && EINTR == errno) {}
         if (-1 == rtn) {
-            throw SocketException(errno, "socket send() failed");
+            if (EAGAIN == errno || EWOULDBLOCK == errno) {
+                // There may be circumstances in which a file descriptor is spuriously reported as ready.
+                // Just retry when this occurs. see man 2 poll, man 2 select.
+                continue;
+            }
+            else {
+                throw SocketException(errno, "socket send()");
+            }
         }
 
         Log(TraceLevel::Trace, "sent (" << m_sockfd << ") nbytes=" << rtn);
@@ -285,9 +291,7 @@ SocketClient::Send(
         throw std::invalid_argument("SocketClient::Send(): unexpected NULL for input data");
     }
 
-    auto len = strlen(data);
-    Log(TraceLevel::Trace, "send(" << m_sockfd << ") nbytes=" << len << "; data='" << data << "'.");
-    Send(data, len);
+    Send(data, strlen(data));
 }
 
 void
@@ -298,14 +302,13 @@ SocketClient::Send(
 {
     ADD_TRACE_TRACE;
 
+    if (0 == len) {
+        return;
+    }
+
     if (!buf) {
         throw std::invalid_argument("SocketClient::Send(): unexpected NULL for input data");
     }
-    if (0 == len) {
-        throw std::invalid_argument("SocketClient::Send(): buf length cannot be 0.");
-    }
-
-    assert(m_abortSendEventFD >= 0);
 
     try {
         Connect();
@@ -313,7 +316,6 @@ SocketClient::Send(
             throw SocketException(0, "SocketClient Send(): invalid sockfd " + std::to_string(m_sockfd));
         }
 
-        std::lock_guard<std::mutex> lck(m_sendMutex);
         SendData(buf, len);
     }
     catch(const SocketException & ex) {
@@ -323,92 +325,42 @@ SocketClient::Send(
 }
 
 void
-SocketClient::CreateAbortSendEventFD()
-{
-    ADD_DEBUG_TRACE;
-    m_abortSendEventFD = eventfd(0, 0);
-    if (m_abortSendEventFD < 0) {
-        throw std::system_error(errno, std::system_category(), "abort-send-poll eventfd()");
-    }
-    Log(TraceLevel::Debug, "Created abort-send-poll eventfd=" << m_abortSendEventFD);
-}
-
-void
-SocketClient::CreateAbortReadEventFD()
-{
-    ADD_DEBUG_TRACE;
-    m_abortReadEventFD = eventfd(0, 0);
-    if (m_abortReadEventFD < 0) {
-        throw std::system_error(errno, std::system_category(), "abort-read-poll eventfd()");
-    }
-    Log(TraceLevel::Debug, "Created abort-read-poll eventfd=" << m_abortReadEventFD);
-}
-
-void
-SocketClient::PollSocket(short pollMode, int abortPollFd)
+SocketClient::PollSocket(short pollMode)
 {
     ADD_DEBUG_TRACE;
 
     if (0 == pollMode) {
         throw std::invalid_argument("PollSocket(): pollMode cannot be 0.");
     }
-    if (abortPollFd < 0) {
-        throw std::invalid_argument("PollSocket(): invalid abort poll fd=" + std::to_string(abortPollFd));
-    }
+
     if (m_sockfd < 0) {
         throw SocketException(0, "PollSocket(): invalid sockfd=" + std::to_string(m_sockfd));
     }
 
-    // use 2 fds: the first one to get real data; the second one to get event data.
-    // event data are used to abort the poll() and abort further reading.
-    struct pollfd pfds[2];
+    struct pollfd pfds[1];
     pfds[0].fd = m_sockfd;
     pfds[0].events = pollMode;
-    pfds[1].fd = abortPollFd;
-    pfds[1].events = POLLIN;
 
-    Log(TraceLevel::Info, "start poll(). abortEventfd=" << abortPollFd << " ...");
-    int pollerr = 0;
-    while( (-1 == (pollerr = poll(pfds, 2, -1))) && (EINTR == errno));
+    Log(TraceLevel::Info, "start poll() ...");
+    int pollRtn = 0;
+    while( (-1 == (pollRtn = poll(pfds, 1, -1))) && (EINTR == errno));
     auto errCopy = errno;
 
     try {
-        if (pollerr <= 0) {
+        // A value of 0 indicates that poll() timed out and no fds were ready
+        if (pollRtn <= 0) {
             throw SocketException(errCopy, "poll()");
-        }
-        if (pfds[1].revents & POLLIN) {
-            // event received to abort poll()
-            throw ReaderInterruptException();
-        }
-        if (!(pfds[0].revents & pollMode)) {
-            throw SocketException(errCopy, "poll() returned unexpected event.");
         }
         if (pfds[0].revents & POLLHUP) {
             throw SocketException(errCopy, "poll() returned hang-up. Socket was closed.");
+        }
+        if (!(pfds[0].revents & pollMode)) {
+            throw SocketException(errCopy, "poll() returned unexpected event.");
         }
     }
     catch(const SocketException & ex) {
         Log(TraceLevel::Info, "PollSocket() finished: " << ex.what());
         throw;
-    }
-}
-
-void
-SocketClient::AbortBlockingPoll(int eventfd) noexcept
-{
-    ADD_DEBUG_TRACE;
-
-    if (eventfd < 0) {
-        return;
-    }
-
-    Log(TraceLevel::Debug, "AbortBlockingPoll(): eventfd=" << eventfd);
-
-    // the buffer size to write must >= 8 bytes
-    uint64_t data = 1;
-    if (write(eventfd, &data, sizeof(data)) <= 0) {
-        std::error_code ec(errno, std::system_category());
-        Log(TraceLevel::Error, "write() to eventfd " << eventfd << " failed: " << ec.message());
     }
 }
 
@@ -448,4 +400,11 @@ SocketClient::WaitForSocketToBeReady(
     m_connCV.wait_for(connlk, std::chrono::milliseconds(timeoutMS), [this] { 
         return (m_stopClient || INVALID_SOCKET != m_sockfd); 
     });
+
+    if (m_stopClient) {
+        return;
+    }
+    if (INVALID_SOCKET == m_sockfd) {
+        throw SocketException(0, "WaitForSocketToBeReady: socket fd is invalid");
+    }
 }

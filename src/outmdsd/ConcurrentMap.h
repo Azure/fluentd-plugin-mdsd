@@ -28,13 +28,16 @@ public:
     ConcurrentMap & operator=(ConcurrentMap&& other);
 
     /// Add new key, value pair
+    /// If key exists, old entry will be replaced.
     void Add(const std::string & key, LogItemPtr value);
 
     /// Erase an item with given key
-    void Erase(const std::string & key);
+    /// Return 1 if erased, 0 if nothing is erased.
+    size_t Erase(const std::string & key);
 
     /// Erase a list of items given their keys
-    void Erase(const std::vector<std::string>& keylist);
+    /// Return number of items erased.
+    size_t Erase(const std::vector<std::string>& keylist);
 
     /// Return all the keys such that fn(value) == true.
     std::vector<std::string> FilterEach(const std::function<bool(LogItemPtr)>& fn);
