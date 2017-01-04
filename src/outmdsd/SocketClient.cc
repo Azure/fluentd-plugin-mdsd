@@ -347,8 +347,7 @@ SocketClient::PollSocket(short pollMode)
     auto errCopy = errno;
 
     try {
-        // A value of 0 indicates that poll() timed out and no fds were ready
-        if (pollRtn <= 0) {
+        if (pollRtn < 0) {
             throw SocketException(errCopy, "poll()");
         }
         if (pfds[0].revents & POLLHUP) {

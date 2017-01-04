@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <future>
 
 namespace TestUtil
 {
@@ -16,6 +17,10 @@ namespace TestUtil
 
     std::string GetTimeNow();
     std::string GetErrnoStr(int errnum);
+
+    // wait for a task for a max amount of time. then check its status
+    // Return true if finished within timeoutMS, false if otherwise.
+    bool WaitForTask(std::future<void>& task, uint32_t timeoutMS);
 }
 
 #endif // __TESTUTIL_H__
