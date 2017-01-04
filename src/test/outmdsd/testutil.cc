@@ -78,3 +78,13 @@ TestUtil::GetErrnoStr(int errnum)
     char* errRC = strerror_r(errnum, errorstr, sizeof(errorstr));
     return std::string(errRC);
 }
+
+bool
+TestUtil::WaitForTask(
+    std::future<void>& task,
+    uint32_t timeoutMS
+    )
+{
+    auto status = task.wait_for(std::chrono::milliseconds(timeoutMS));
+    return (std::future_status::ready == status);
+}
