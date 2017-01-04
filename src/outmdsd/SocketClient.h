@@ -46,6 +46,13 @@ public:
 
     ~SocketClient();
 
+    // not copyable, not movable
+    SocketClient(const SocketClient& other) = delete;
+    SocketClient& operator=(const SocketClient& other) = delete;
+
+    SocketClient(SocketClient&& other) = delete;
+    SocketClient& operator=(SocketClient&& other) = delete;
+
     /// <summary> Notice SocketClient to stop further operation </summary>
     void Stop();
 

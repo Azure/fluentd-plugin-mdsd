@@ -1,6 +1,8 @@
 #include <boost/test/unit_test.hpp>
 #include <future>
 #include <ConcurrentQueue.h>
+#include "testutil.h"
+#include "CounterCV.h"
 
 BOOST_AUTO_TEST_SUITE(testqueue)
 
@@ -20,13 +22,44 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_BVT)
     }
 }
 
+BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_MaxSize)
+{
+    try {
+        const int maxSize = 2;
+        ConcurrentQueue<int> q(maxSize);
+
+        for (int i = 0; i < maxSize; i++) {
+            q.push(i);
+            BOOST_CHECK_MESSAGE(i+1, q.size());
+        }
+
+        for (int i = 0; i < 10; i++) {
+            q.push(i);
+            BOOST_CHECK_MESSAGE(maxSize == q.size(), "pushed items=" << (maxSize+i+1));
+        }
+    }
+    catch(const std::exception & ex) {
+        BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
+    }
+}
+
+
 // this function should wait until element is ready
 // validate that
 //   - it actual waits
 //   - it will stop waiting once it gets item
 void
-WaitQueueItem(ConcurrentQueue<int>* q, int expected, uint32_t minRunTimeMS)
+WaitQueueItem(
+    std::promise<void> & masterReady,
+    std::promise<void> & threadReady,
+    ConcurrentQueue<int>* q,
+    int expected,
+    uint32_t minRunTimeMS
+    )
 {
+    threadReady.set_value();
+    masterReady.get_future().wait();
+
     auto startTime = std::chrono::system_clock::now();
     int actual = 0;
     q->wait_and_pop(actual);
@@ -38,31 +71,26 @@ WaitQueueItem(ConcurrentQueue<int>* q, int expected, uint32_t minRunTimeMS)
     BOOST_TEST_MESSAGE("queue wait_and_pop item=" << actual << "; runtime: " << runTimeMS);
 }
 
-// wait for a task for a max amount of time. then check its status
-void
-ValidateTaskStatus(std::future<void>& task, uint32_t timeoutMS)
-{
-    try {
-        auto status = task.wait_for(std::chrono::milliseconds(timeoutMS));
-        bool taskOK = (std::future_status::ready == status);
-        BOOST_CHECK_EQUAL(true, taskOK);
-    }
-    catch(const std::exception & ex) {
-        BOOST_FAIL("ValidateTaskStatus failed: " << ex.what());
-    }
-}
-
 BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_Wait)
 {
     try {
+        // use a promise and shared_future to sync thread startup
+        std::promise<void> masterReady;
+        std::promise<void> threadReady;
+
         ConcurrentQueue<int> q;
-        const uint32_t minRunTimeMS = 100;
+        const uint32_t minRunTimeMS = 10;
         const int expected = 1234;
-        auto task = std::async(std::launch::async, WaitQueueItem, &q, expected, minRunTimeMS);
+        auto task = std::async(std::launch::async, WaitQueueItem,
+            std::ref(masterReady), std::ref(threadReady), &q, expected, minRunTimeMS);
+
+        threadReady.get_future().wait();
+        masterReady.set_value();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
         q.push(expected);
 
-        ValidateTaskStatus(task, minRunTimeMS*5);
+        BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(task, minRunTimeMS*5));
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
@@ -74,8 +102,15 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_Wait)
 //   - it actual waits
 //   - it will stop when stop_wait() is called
 void
-WaitEmptyQueue(ConcurrentQueue<int>* q, uint32_t minRunTimeMS)
+WaitEmptyQueue(
+    std::promise<void>& masterReady,
+    std::promise<void>& threadReady,
+    ConcurrentQueue<int>* q,
+    uint32_t minRunTimeMS)
 {
+    threadReady.set_value();
+    masterReady.get_future().wait();
+
     auto startTime = std::chrono::system_clock::now();
     const int origVal = -123;
     int actual = origVal;
@@ -93,13 +128,121 @@ WaitEmptyQueue(ConcurrentQueue<int>* q, uint32_t minRunTimeMS)
 BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_StopWait)
 {
     try {
+        // use a promise and shared_future to sync thread startup
+        std::promise<void> masterReady;
+        std::promise<void> threadReady;
+
         ConcurrentQueue<int> q;
-        const uint32_t minRunTimeMS = 100;
-        auto task = std::async(std::launch::async, WaitEmptyQueue, &q, minRunTimeMS);
+        const uint32_t minRunTimeMS = 10;
+
+        auto task = std::async(std::launch::async, WaitEmptyQueue,
+            std::ref(masterReady), std::ref(threadReady), &q, minRunTimeMS);
+
+        threadReady.get_future().wait();
+        masterReady.set_value();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
         q.stop_wait();
 
-        ValidateTaskStatus(task, minRunTimeMS*5);
+        BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(task, minRunTimeMS*5));
+    }
+    catch(const std::exception & ex) {
+        BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
+    }
+}
+
+void
+PushToQueue(
+    const std::shared_future<void> & masterReady,
+    std::promise<void>& thReady,
+    ConcurrentQueue<int>& q,
+    int nitems,
+    const std::shared_ptr<CounterCV>& cv
+    )
+{
+    CounterCVWrap cvwrap(cv);
+
+    thReady.set_value();
+    masterReady.wait();
+    for (int i = 0; i < nitems; i++) {
+        q.push(i);
+    }
+}
+
+void
+PopFromQueue(
+    const std::shared_future<void> & masterReady,
+    std::promise<void>& thReady,
+    ConcurrentQueue<int>& q,
+    const std::shared_ptr<CounterCV>& cv
+    )
+{
+    CounterCVWrap cvwrap(cv);
+
+    thReady.set_value();
+    masterReady.wait();
+    while(true) {
+        auto v = q.wait_and_pop();
+        if (nullptr == v) {
+            break;
+        }
+    }
+}
+
+// To make sure that all threads are run concurrently, use std::promise and
+// std::shared_future to coordinate the threads.
+void
+MultiPushPopTest(
+    int nPushThreads,
+    int nPopThreads,
+    int nitems
+    )
+{
+    // use a promise and shared_future to sync all threads to start at the same time
+    std::promise<void> masterPromise;
+    std::shared_future<void> masterReady(masterPromise.get_future());
+
+    std::vector<std::promise<void>> thReadyList;
+    for (int i = 0; i < (nPushThreads+nPopThreads); i++) {
+        thReadyList.push_back(std::promise<void>());
+    }
+
+    ConcurrentQueue<int> q;
+
+    auto pushCV = std::make_shared<CounterCV>(nPushThreads);
+    auto popCV = std::make_shared<CounterCV>(nPopThreads);
+
+    std::vector<std::future<void>> pushTasks;
+    for (int i = 0; i < nPushThreads; i++) {
+        auto t = std::async(std::launch::async, PushToQueue, masterReady,
+            std::ref(thReadyList[i]), std::ref(q), nitems, pushCV);
+        pushTasks.push_back(std::move(t));
+    }
+
+    std::vector<std::future<void>> popTasks;
+    for (int i = 0; i < nPopThreads; i++) {
+        auto t = std::async(std::launch::async, PopFromQueue, masterReady,
+            std::ref(thReadyList[i+nPushThreads]), std::ref(q), popCV);
+        popTasks.push_back(std::move(t));
+    }
+
+    // wait for all threads to be ready
+    for (auto & t: thReadyList) {
+        t.get_future().wait();
+    }
+
+    // start all threads
+    masterPromise.set_value();
+
+    BOOST_CHECK_EQUAL(true, pushCV->wait_for(400));
+    q.stop_wait();
+    BOOST_CHECK_EQUAL(true, popCV->wait_for(400));
+}
+
+BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_MultiThreads)
+{
+    try {
+        MultiPushPopTest(6, 4, 10000);
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
