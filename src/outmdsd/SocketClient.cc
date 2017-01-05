@@ -17,18 +17,22 @@ using namespace EndpointLog;
 
 SocketClient::SocketClient(
     const std::string & socketfile,
-    int connRetryTimeoutMS
+    unsigned int connRetryTimeoutMS
     ) :
     m_sockaddr(std::make_shared<UnixSockAddr>(socketfile)),
-    m_connRetryTimeoutMS(connRetryTimeoutMS)
+    m_connRetryTimeoutMS(connRetryTimeoutMS),
+    m_randDist(0.75, 1.25)
 {
+    if (0 == m_connRetryTimeoutMS) {
+        throw std::invalid_argument("SocketClient: connect retry timeout must be non-zero.");
+    }
     m_lastConnTime.tv_sec = 0;
     m_lastConnTime.tv_usec = 0;
 }
 
 SocketClient::SocketClient(
     int port,
-    int connRetryTimeoutMS
+    unsigned int connRetryTimeoutMS
     ) :
     m_sockaddr(std::make_shared<TcpSockAddr>(port)),
     m_connRetryTimeoutMS(connRetryTimeoutMS)
@@ -52,13 +56,17 @@ SocketClient::~SocketClient()
 void
 SocketClient::Stop()
 {
+    ADD_DEBUG_TRACE;
+
     if (!m_stopClient) {
         Log(TraceLevel::Debug, "SocketClient::Stop()");
 
-        std::unique_lock<std::mutex> connlk(m_fdMutex);
+        // Because m_stopClient is used to break retry loop in SetupSocketConnect(),
+        // which is called under m_fdMutex lock, it should be called here
+        // before m_fdMutex is locked.
         m_stopClient = true;
+        std::lock_guard<std::mutex> connlk(m_fdMutex);
         m_connCV.notify_all();
-        connlk.unlock();
     }
     Close();
 }
@@ -90,24 +98,26 @@ SocketClient::SetupSocketConnect()
     Log(TraceLevel::Debug, "Successfully connect() to sockfd=" << m_sockfd);
 }
 
-static int
+static unsigned int
 GetDiffMilliSeconds(
     const struct timeval& from,
     const struct timeval& to)
 {
-    return ( (to.tv_sec - from.tv_sec) * 1000 + (to.tv_usec -  from.tv_usec) / 1000 );
+    int n = ( (to.tv_sec - from.tv_sec) * 1000 + (to.tv_usec -  from.tv_usec) / 1000 );
+    if (n < 0) {
+        n *= (-1);
+    }
+    return n;
 }
 
-static int
+static unsigned int
 GetRuntimeInMS(
     const struct timeval & startTime
     )
 {
     struct timeval currTime;
     (void) gettimeofday(&currTime, 0);
-    auto runtimeMS = GetDiffMilliSeconds(startTime, currTime);
-    assert(runtimeMS >= 0);
-    return runtimeMS;
+    return GetDiffMilliSeconds(startTime, currTime);
 }
 
 bool
@@ -375,6 +385,8 @@ SocketClient::WaitBeforeReConnect(
 
     auto k = 1 << (m_numConnect % 10);
     auto delayMS = std::min(minDelay * k, maxDelay);
+    // Add random factor to delay
+    delayMS = static_cast<int>(delayMS * m_randDist(m_randGen));
 
     Log(TraceLevel::Trace, "WaitBeforeReConnect (ms): " << delayMS);
 

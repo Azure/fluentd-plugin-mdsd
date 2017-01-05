@@ -12,10 +12,13 @@ BOOST_AUTO_TEST_SUITE(testresender)
 
 size_t
 StartDataResender(
+    std::promise<void>& threadReady,
     const std::shared_ptr<DataResender>& resender,
     uint32_t minRunTimeMS
     )
 {
+    threadReady.set_value();
+
     auto startTime = std::chrono::system_clock::now();
     auto nTimerTriggered = resender->Run();
     auto endTime = std::chrono::system_clock::now();
@@ -50,9 +53,15 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_EmptyCache)
         const int nExpectedTimers = 2;
         const uint32_t minRunTimeMS = retryMS * nExpectedTimers + retryMS/2;
 
+        // To sync between main thread and StartDataResender thread
+        std::promise<void> threadReady;
+
         auto sockClient = std::make_shared<SocketClient>("/tmp/nosuchfile", 1);
         auto resender = CreateDataResender(sockClient, std::make_shared<ConcurrentMap<LogItemPtr>>(), 0, retryMS);
-        auto task = std::async(std::launch::async, StartDataResender, resender, minRunTimeMS);
+        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, minRunTimeMS);
+
+        // Wait until StartDataResender is ready before starting timer
+        threadReady.get_future().wait();
         usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
@@ -70,11 +79,17 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_OneItem)
     try {
         auto retryMS = 50;
         auto minRunTimeMS = retryMS+retryMS/10;
+
+        std::promise<void> threadReady;
+
         auto sockClient = std::make_shared<SocketClient>("/tmp/nosuchfile", 1);
         auto dataCache = std::make_shared<ConcurrentMap<LogItemPtr>>();
         auto resender = CreateDataResender(sockClient, dataCache, 10, retryMS);
-        auto task = std::async(std::launch::async, StartDataResender, resender, minRunTimeMS);
-        std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
+        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, minRunTimeMS);
+
+        // Wait until StartDataResender is ready before starting timer
+        threadReady.get_future().wait();
+        usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
         resender->Stop();

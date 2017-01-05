@@ -12,8 +12,8 @@ using namespace EndpointLog;
 DataResender::DataResender(
     const std::shared_ptr<SocketClient> & sockClient,
     const std::shared_ptr<ConcurrentMap<LogItemPtr>> & dataCache,
-    int ackTimeoutMS,
-    int resendIntervalMS
+    unsigned int ackTimeoutMS,
+    unsigned int resendIntervalMS
     ) :
     m_socketClient(sockClient),
     m_dataCache(dataCache),
@@ -23,11 +23,11 @@ DataResender::DataResender(
     assert(m_socketClient);
     assert(m_dataCache);
 
-    if (ackTimeoutMS <= 0) {
+    if (0 == ackTimeoutMS) {
         throw std::invalid_argument("DataResender: ack timeout must be a positive integer.");
     }
 
-    if (m_resendIntervalMS <= 0) {
+    if (0 == m_resendIntervalMS) {
         throw std::invalid_argument("DataResender: resend interval must be a positive integer.");
     }
 
@@ -111,7 +111,7 @@ DataResender::ResendData()
     // Check whether any cached items need to be dropped
     std::function<bool(LogItemPtr)> CheckItemAge = [this](LogItemPtr itemPtr)
     {
-        if (itemPtr && itemPtr->GetLastTouchMilliSeconds() > m_ackTimeoutMS) {
+        if (itemPtr && static_cast<unsigned int>(itemPtr->GetLastTouchMilliSeconds()) > m_ackTimeoutMS) {
             return true;
         }
         return false;

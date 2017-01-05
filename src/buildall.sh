@@ -129,7 +129,7 @@ BuildWithMake()
 
 ParseGlibcVer()
 {
-    glibcver=2.7  # max GLIBC version to support
+    glibcver=2.9  # max GLIBC version to support
     dirname=./builddir/release/lib
     echo
     echo python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
