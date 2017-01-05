@@ -13,9 +13,9 @@ using namespace EndpointLog;
 
 SocketLogger::SocketLogger(
     const std::string& socketFile,
-    int ackTimeoutMS,
-    int resendIntervalMS,
-    int connRetryTimeoutMS
+    unsigned int ackTimeoutMS,
+    unsigned int resendIntervalMS,
+    unsigned int connRetryTimeoutMS
     ):
     m_socketClient(std::make_shared<SocketClient>(socketFile, connRetryTimeoutMS)),
     m_dataCache(ackTimeoutMS? std::make_shared<ConcurrentMap<LogItemPtr>>() : nullptr),

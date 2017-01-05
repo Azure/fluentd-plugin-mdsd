@@ -40,9 +40,9 @@ public:
     /// <param name='bufferLimit'>max LogItem to buffer. 0 means no limit.</param>
     BufferedLogger(
         const std::string& socketFile,
-        int ackTimeoutMS,
-        int resendIntervalMS,
-        int connRetryTimeoutMS,
+        unsigned int ackTimeoutMS,
+        unsigned int resendIntervalMS,
+        unsigned int connRetryTimeoutMS,
         size_t bufferLimit
         );
 

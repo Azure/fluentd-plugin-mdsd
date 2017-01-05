@@ -11,9 +11,9 @@ using namespace EndpointLog;
 
 BufferedLogger::BufferedLogger(
     const std::string& socketFile,
-    int ackTimeoutMS,
-    int resendIntervalMS,
-    int connRetryTimeoutMS,
+    unsigned int ackTimeoutMS,
+    unsigned int resendIntervalMS,
+    unsigned int connRetryTimeoutMS,
     size_t bufferLimit
     ):
     m_sockClient(std::make_shared<SocketClient>(socketFile, connRetryTimeoutMS)),

@@ -35,8 +35,8 @@ public:
     DataResender(
         const std::shared_ptr<SocketClient> & sockClient,
         const std::shared_ptr<ConcurrentMap<LogItemPtr>> & dataCache,
-        int ackTimeoutMS,
-        int resendIntervalMS
+        unsigned int ackTimeoutMS,
+        unsigned int resendIntervalMS
         );
 
     ~DataResender();
@@ -79,8 +79,8 @@ private:
     std::shared_ptr<SocketClient> m_socketClient;
     std::shared_ptr<ConcurrentMap<LogItemPtr>> m_dataCache;
 
-    int m_ackTimeoutMS;       // if ack is not received in this time, item is removed from cache.
-    int m_resendIntervalMS;   // cached items resending interval in milli-seconds.
+    unsigned int m_ackTimeoutMS;       // if ack is not received in this time, item is removed from cache.
+    unsigned int m_resendIntervalMS;   // cached items resending interval in milli-seconds.
 
     std::atomic<bool> m_stopMe { false }; // A flag used to stop resending loop.
 

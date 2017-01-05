@@ -7,6 +7,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <random>
 
 extern "C" {
 #include <sys/time.h>
@@ -34,7 +35,7 @@ public:
     /// <param name="socketfile">unix domain socket file</param>
     /// <param name="connRetryTimeoutMS">number of milli-seconds to timeout socket
     /// connect() retry </param>
-    SocketClient(const std::string & socketfile, int connRetryTimeoutMS=60*1000);
+    SocketClient(const std::string & socketfile, unsigned int connRetryTimeoutMS=60*1000);
 
     /// <summary>
     /// Construct a new object using TCP/IP port.
@@ -42,7 +43,7 @@ public:
     /// <param name="port">port number</param>
     /// <param name="connRetryTimeoutMS">number of milli-seconds to timeout socket
     /// connect() retry </param>
-    SocketClient(int port, int connRetryTimeoutMS=60*1000);
+    SocketClient(int port, unsigned int connRetryTimeoutMS=60*1000);
 
     ~SocketClient();
 
@@ -135,7 +136,7 @@ private:
 private:
     constexpr static int INVALID_SOCKET = -1;
     std::shared_ptr<SockAddr> m_sockaddr;
-    int m_connRetryTimeoutMS = 0;  // milli-seconds to timeout connect() retry.
+    unsigned int m_connRetryTimeoutMS = 0;  // milli-seconds to timeout connect() retry.
 
     std::atomic<int> m_sockfd{INVALID_SOCKET};
     std::mutex m_fdMutex;  // protect sockfd at socket creation/close time.
@@ -153,6 +154,9 @@ private:
     std::condition_variable m_connCV;
 
     size_t m_numConnect = 0; // number of times to create a new socket.
+
+    std::default_random_engine m_randGen;
+    std::uniform_real_distribution<float> m_randDist;
 };
 
 } // namespace
