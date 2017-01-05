@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Reconnect_Error)
             BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS), "Send() index=" << i);
         }
 
-        BOOST_CHECK_EQUAL(ntimes, client.GetNumReConnect());
+        BOOST_CHECK_LE(ntimes, client.GetNumReConnect());
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test exception " << ex.what());

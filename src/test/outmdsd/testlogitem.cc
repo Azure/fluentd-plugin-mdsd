@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(Test_IdMgr_BVT)
 
         // SaveItem won't create new id if key already exists
         for (int i = 0; i < 3; i++) {
-            auto id1 = m.AddItem(key, testValue);
+            auto id1 = m.FindOrInsert(key, testValue);
             BOOST_CHECK_EQUAL(1, id1);
         }
 
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(Test_IdMgr_BVT)
         BOOST_CHECK_EQUAL(testValue, newValue.second);
 
         const std::string key2 = "def";
-        m.SetItem(key2, newValue);
+        m.Insert(key2, newValue);
 
         IdMgr::value_type_t setValue;
         BOOST_CHECK_EQUAL(true, m.GetItem(key2, setValue));

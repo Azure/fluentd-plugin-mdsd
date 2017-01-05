@@ -65,10 +65,10 @@ DjsonLogItem::ComposeSchema(
     }
     else {
         auto schemaArray = ComposeSchemaArray();
-        auto schemaId = GetIdMgr().AddItem(sortedKey, schemaArray);
+        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, schemaArray);
 
         // save to cache for unsorted key too
-        GetIdMgr().SetItem(unsortedKey, std::make_pair(schemaId, schemaArray));
+        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, schemaArray));
         strm << schemaId << "," << schemaArray;
     }
 }

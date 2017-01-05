@@ -16,10 +16,13 @@ BOOST_AUTO_TEST_SUITE(testreader)
 
 void
 StartSocketReader(
+    std::promise<void>& threadReady,
     const std::shared_ptr<DataReader>& sr,
     uint32_t minRunTimeMS
     )
 {
+    threadReady.set_value();
+
     auto startTime = std::chrono::system_clock::now();
     sr->Run();
     auto endTime = std::chrono::system_clock::now();
@@ -96,10 +99,16 @@ BOOST_AUTO_TEST_CASE(Test_SocketReader_Error)
         auto dataCache = std::make_shared<ConcurrentMap<LogItemPtr>>();
 
         const uint32_t minRunTimeMS = 100;
-        auto sockReader = std::make_shared<DataReader>(sockClient, dataCache);
-        auto readerTask = std::async(std::launch::async, StartSocketReader, sockReader, minRunTimeMS);
+        std::promise<void> threadReady;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
+        auto sockReader = std::make_shared<DataReader>(sockClient, dataCache);
+        auto readerTask = std::async(std::launch::async, StartSocketReader,
+            std::ref(threadReady),sockReader, minRunTimeMS);
+
+        // wait until StartSocketReader thread starts
+        threadReady.get_future().wait();
+
+        usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
         sockReader->Stop();

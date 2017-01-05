@@ -31,9 +31,9 @@ public:
     /// </param>
     SocketLogger(
         const std::string& socketFile,
-        int ackTimeoutMS,
-        int resendIntervalMS,
-        int connRetryTimeoutMS = 60*1000
+        unsigned int ackTimeoutMS,
+        unsigned int resendIntervalMS,
+        unsigned int connRetryTimeoutMS = 60*1000
         );
 
     ~SocketLogger();

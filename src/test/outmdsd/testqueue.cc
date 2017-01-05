@@ -4,6 +4,8 @@
 #include "testutil.h"
 #include "CounterCV.h"
 
+using namespace EndpointLog;
+
 BOOST_AUTO_TEST_SUITE(testqueue)
 
 BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_BVT)
@@ -100,7 +102,7 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_Wait)
 // this function should wait until element is ready
 // validate that
 //   - it actual waits
-//   - it will stop when stop_wait() is called
+//   - it will stop when stop_once_empty() is called
 void
 WaitEmptyQueue(
     std::promise<void>& masterReady,
@@ -142,7 +144,7 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_StopWait)
         masterReady.set_value();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
-        q.stop_wait();
+        q.stop_once_empty();
 
         BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(task, minRunTimeMS*5));
     }
@@ -235,7 +237,7 @@ MultiPushPopTest(
     masterPromise.set_value();
 
     BOOST_CHECK_EQUAL(true, pushCV->wait_for(400));
-    q.stop_wait();
+    q.stop_once_empty();
     BOOST_CHECK_EQUAL(true, popCV->wait_for(400));
 }
 

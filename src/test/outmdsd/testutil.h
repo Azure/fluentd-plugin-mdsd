@@ -10,6 +10,12 @@
 namespace TestUtil
 {
     inline std::string EndOfTest() { return "ENDOFTEST"; }
+
+    inline std::string CreateMsg(int index)
+    {
+        return std::string("TestMsg-") + std::to_string(index);
+    }
+
     std::string GetCurrDir();
 
     bool IsFileExists(const std::string & filepath);
