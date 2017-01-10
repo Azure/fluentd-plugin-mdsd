@@ -147,6 +147,7 @@ InstallPkgs
 BuildWithCMake
 ParseGlibcVer
 BuildWithMake fluent-plugin-mdm
+BuildWithMake fluent-plugin-mdsd
 
 echo
 echo Finished all builds at `date`. error = ${TotalErrors}
