@@ -2,11 +2,12 @@
 
 ## Install required software
 
-- [SWIG](http://www.swig.org/) 3.0
-- GCC version >= 4.8.4
 - CMake version >= 2.8.12
 - Boost unit test version 1.55 (libboost-test)
   NOTE: other version of libboost-test may not work.
+- GCC version >= 4.8.4
+- Ruby 2.2.0 with [OMS Linux Agent](https://github.com/Microsoft/OMS-Agent-for-Linux)
+- [SWIG](http://www.swig.org/) 3.0
 
 ## How to build the code
 
