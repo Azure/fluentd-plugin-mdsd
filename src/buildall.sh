@@ -146,7 +146,6 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 InstallPkgs
 BuildWithCMake
 ParseGlibcVer
-BuildWithMake fluent-plugin-mdm
 BuildWithMake fluent-plugin-mdsd
 
 echo
