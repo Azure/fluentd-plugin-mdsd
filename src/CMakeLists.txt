@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(fluentdplugins)
+project(fluentd-plugin-mdsd)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
@@ -45,7 +45,6 @@ set(RUBY_INC_PATH /opt/microsoft/omsagent/ruby/include/ruby-2.2.0)
 
 option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
 
-add_subdirectory(ifxext)
 add_subdirectory(outmdsd)
-add_subdirectory(test)
 add_subdirectory(outmdsdrb)
+add_subdirectory(test)
