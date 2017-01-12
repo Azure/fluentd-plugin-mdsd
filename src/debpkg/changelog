@@ -1,0 +1,5 @@
+PACKAGE (0.1.0) unstable; urgency=low
+
+  * Initial release
+
+ -- Azure Linux Team <azlinux@microsoft.com>  Thu, 12 Jan 2017 18:00:00 +0800
