@@ -77,11 +77,7 @@ clean: install-clean
 install-clean:
 	-rm -rf $(FAKEROOT)
 
-ifeq ($(CC), clang)
-install-deps: install-clean install-lib
-else
 install-deps: install-clean install-lib install-header
-endif
 
 install-header:
 	mkdir -p $(INCLUDEDIR)

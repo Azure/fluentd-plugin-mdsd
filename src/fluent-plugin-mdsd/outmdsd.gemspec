@@ -11,6 +11,6 @@ Gem::Specification.new do |s|
                "fluent-plugin-mdsd.gemspec",
                "out_mdsd_sample.conf"
               ]
-    s.homepage = "https://msazure.visualstudio.com/One/Linux/_git/Compute-Runtime-Tux-fluentd"
-    s.license = "Microsoft Internal Only"
+    s.homepage = "https://github.com/Azure/fluentd-plugin-mdsd/"
+    s.license = "Apache License Version 2.0, January 2004"
 end
