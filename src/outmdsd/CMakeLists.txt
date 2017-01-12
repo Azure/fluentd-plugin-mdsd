@@ -7,6 +7,7 @@ set(SOURCES
     DataResender.cc
     DataSender.cc
     DjsonLogItem.cc
+    FileLogger.cc
     IdMgr.cc
     LogItem.cc
     SockAddr.cc

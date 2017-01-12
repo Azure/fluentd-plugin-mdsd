@@ -24,8 +24,6 @@
     } \
 /**/
 
-class TraceLogger;
-
 namespace EndpointLog {
     enum class TraceLevel {
         Trace,
@@ -113,17 +111,13 @@ namespace EndpointLog {
                              const char* filename, int lineNumber);
 
     private:
-        static std::string s_filepath;  // trace log file path
-        static bool s_createIfNotExist; // if true, create trace log file if not exist.
-
         TraceLevel m_level;
         std::string m_func;
         const char* m_srcFilename;
         int m_lineNumber;
 
         static TraceLevel s_minLevel;
-
-        static TraceLogger& GetLogger();
+        static class ILogger* s_logger;
 
         static std::unordered_map<TraceLevel, std::string, EnumClassHash>& GetLevelStrTable();
         static std::unordered_map<std::string, TraceLevel>& GetStr2LevelTable();
