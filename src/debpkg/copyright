@@ -1,0 +1,6 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/Azure/fluentd-plugin-mdsd/
+
+Files: *
+Copyright: 2017 Microsoft Corporation
+License: https://github.com/Azure/fluentd-plugin-mdsd/blob/master/LICENSE.txt

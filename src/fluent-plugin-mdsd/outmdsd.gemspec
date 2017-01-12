@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name = "fluent-plugin-mdsd"
-    s.version = "0.1.0"
+    s.version = "GEMVERSION"
     s.date = "2017-01-05"
     s.summary = "Fluentd output plugin for Linux monitoring agent (mdsd)"
     s.description = "Fluentd output plugin for Linux monitoring agent(mdsd), which sends data to Azure Geneva service."
