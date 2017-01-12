@@ -10,10 +10,12 @@ BuildType=
 CCompiler=gcc
 CXXCompiler=g++
 BUILDDIR=builddir
+BuildName=dev
 
 Usage()
 {
-    echo "Usage: $0 <-d|-o> [-h]"
+    echo "Usage: $0 [-b buildname] <-d|-o> [-h]"
+    echo "    -b: use buildname. Default: dev."
     echo "    -d: build debug build."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
@@ -34,7 +36,7 @@ SetBuildType()
     fi
 }
 
-args=`getopt dho $*`
+args=`getopt b:dho $*`
 if [ $? != 0 ]; then
     Usage
     exit 1
@@ -43,6 +45,9 @@ set -- $args
 
 for i; do
     case "$i" in
+        -b)
+            BuildName=$2
+            shift ; shift ;;
         -d)
             SetBuildType Debug
             shift ;;
@@ -116,7 +121,7 @@ BuildWithMake()
     echo
     echo Start to build: directory=$1 ...
     make -C $1 clean
-    make -C $1
+    make LABEL=build.${BuildName} -C $1
 
     if [ $? != 0 ]; then
         let TotalErrors+=1
@@ -147,6 +152,7 @@ InstallPkgs
 BuildWithCMake
 ParseGlibcVer
 BuildWithMake fluent-plugin-mdsd
+BuildWithMake debpkg
 
 echo
 echo Finished all builds at `date`. error = ${TotalErrors}
