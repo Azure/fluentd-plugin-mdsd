@@ -36,13 +36,12 @@ TraceLevel2SyslogLevel()
 }
 
 SyslogTracer::SyslogTracer(
-    const std::string & syslogIdent,
     int option,
     int facility
     ) :
     m_logLevel(TraceLevel2SyslogLevel())
 {
-    openlog(syslogIdent.c_str(), option, facility);
+    openlog(NULL, option, facility);
 }
 
 SyslogTracer::~SyslogTracer()

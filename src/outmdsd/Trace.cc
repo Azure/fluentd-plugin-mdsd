@@ -9,6 +9,7 @@ extern "C" {
 #include "Trace.h"
 #include "Exceptions.h"
 #include "FileTracer.h"
+#include "SyslogTracer.h"
 
 using namespace EndpointLog;
 
@@ -34,7 +35,25 @@ Trace::Init(
     )
 {
     GetLevelStrTable();
+
+    if (s_logger) {
+        delete s_logger;
+    }
     s_logger = new FileTracer(filepath, createIfNotExist);
+}
+
+void
+Trace::Init(
+    int syslogOption,
+    int syslogFacility
+    )
+{
+    GetLevelStrTable();
+
+    if (s_logger) {
+        delete s_logger;
+    }
+    s_logger = new SyslogTracer(syslogOption, syslogFacility);
 }
 
 std::string

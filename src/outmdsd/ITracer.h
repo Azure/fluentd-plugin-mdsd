@@ -9,6 +9,8 @@ namespace EndpointLog {
 
 class ITracer {
 public:
+    virtual ~ITracer() = default;
+
     virtual void WriteLog(const std::string & msg) = 0;
 };
 
