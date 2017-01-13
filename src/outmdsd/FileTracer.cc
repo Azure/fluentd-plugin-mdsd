@@ -8,12 +8,12 @@ extern "C" {
 #include <fcntl.h>
 }
 
-#include "FileLogger.h"
+#include "FileTracer.h"
 
 namespace EndpointLog {
 
 
-FileLogger::FileLogger(
+FileTracer::FileTracer(
     const std::string& filepath,
     bool createIfNotExists
     ) :
@@ -21,7 +21,7 @@ FileLogger::FileLogger(
     m_fd(-1)
 {
     if (filepath.empty()) {
-        throw std::invalid_argument("FileLogger: invalid empty filepath parameter");
+        throw std::invalid_argument("FileTracer: invalid empty filepath parameter");
     }
 
     int rtn = 0;
@@ -39,7 +39,7 @@ FileLogger::FileLogger(
 }
 
 void
-FileLogger::WriteLog(
+FileTracer::WriteLog(
     const std::string& msg
     )
 {

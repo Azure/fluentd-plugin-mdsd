@@ -7,12 +7,13 @@ set(SOURCES
     DataResender.cc
     DataSender.cc
     DjsonLogItem.cc
-    FileLogger.cc
+    FileTracer.cc
     IdMgr.cc
     LogItem.cc
     SockAddr.cc
     SocketClient.cc
     SocketLogger.cc
+    SyslogTracer.cc
     Trace.cc
 )
 

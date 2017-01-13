@@ -117,7 +117,7 @@ namespace EndpointLog {
         int m_lineNumber;
 
         static TraceLevel s_minLevel;
-        static class ILogger* s_logger;
+        static class ITracer* s_logger;
 
         static std::unordered_map<TraceLevel, std::string, EnumClassHash>& GetLevelStrTable();
         static std::unordered_map<std::string, TraceLevel>& GetStr2LevelTable();

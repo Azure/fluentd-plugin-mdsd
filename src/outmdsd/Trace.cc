@@ -8,12 +8,12 @@ extern "C" {
 
 #include "Trace.h"
 #include "Exceptions.h"
-#include "FileLogger.h"
+#include "FileTracer.h"
 
 using namespace EndpointLog;
 
 TraceLevel Trace::s_minLevel = TraceLevel::Info;
-ILogger* Trace::s_logger = nullptr;
+ITracer* Trace::s_logger = nullptr;
 
 static
 std::string GetFileBasename(
@@ -34,7 +34,7 @@ Trace::Init(
     )
 {
     GetLevelStrTable();
-    s_logger = new FileLogger(filepath, createIfNotExist);
+    s_logger = new FileTracer(filepath, createIfNotExist);
 }
 
 std::string
