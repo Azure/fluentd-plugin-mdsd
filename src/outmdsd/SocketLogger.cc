@@ -3,6 +3,7 @@
 #include "ConcurrentMap.h"
 #include "SocketLogger.h"
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "SocketClient.h"
 #include "DataReader.h"
 #include "DataResender.h"

@@ -86,6 +86,11 @@ public:
         m_svlist.emplace_back(std::move(name), "FT_INT32", std::to_string(value));
     }
 
+    void AddData(std::string name, uint32_t value)
+    {
+        m_svlist.emplace_back(std::move(name), "FT_INT64", std::to_string(value));
+    }
+
     void AddData(std::string name, int64_t value)
     {
         m_svlist.emplace_back(std::move(name), "FT_INT64", std::to_string(value));

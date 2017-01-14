@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "testutil.h"
 
 using namespace EndpointLog;

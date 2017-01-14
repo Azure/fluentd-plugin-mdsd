@@ -3,6 +3,7 @@
 #define BOOST_TEST_MODULE "outmdsdut"
 #include <boost/test/included/unit_test.hpp>
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "testutil.h"
 
 using namespace EndpointLog;
