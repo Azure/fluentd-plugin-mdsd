@@ -8,6 +8,8 @@
 #include <unordered_map>
 
 namespace EndpointLog {
+    class ITracer;
+
     enum class TraceLevel {
         Trace,
         Debug,
@@ -69,19 +71,10 @@ namespace EndpointLog {
             }
         }
 
-        /// Initialize tracing to log to a given file.
-        /// NOTE: One of Init() must be called before doing any tracing.
-        /// Throw exceptions if any error.
-        /// <param name="logFilePath"> log file path </param>
-        /// <param name="createIfNotExist"> If true, create the log file if it
-        /// exist. If false, assume the file already exists. </param>
-        static void Init(const std::string& logFilePath, bool createIfNotExist);
-
-        /// Initialize tracing to log to syslog.
-        /// NOTE: One of Init() must be called before doing any tracing.
-        /// <param name="syslogOption"> openlog() option </param>
-        /// <param name="syslogFacility"> syslog facility </param>
-        static void Init(int syslogOption, int syslogFacility);
+        /// Set tracer object which implements the real logging.
+        /// NOTE: This must be called before doing any tracing.
+        /// Throw exception if any error.
+        static void SetTracer(ITracer* tracerObj);
 
         static void SetTraceLevel(TraceLevel level)
         {
@@ -108,7 +101,7 @@ namespace EndpointLog {
 
         static TraceLevel s_minLevel;
         // Use a static pointer to avoid static object deinitialization order issue
-        static class ITracer* s_logger;
+        static ITracer* s_logger;
 
         static std::unordered_map<TraceLevel, std::string, EnumClassHash>& GetLevelStrTable();
         static std::unordered_map<std::string, TraceLevel>& GetStr2LevelTable();

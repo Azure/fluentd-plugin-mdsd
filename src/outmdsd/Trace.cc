@@ -7,9 +7,8 @@ extern "C" {
 }
 
 #include "Trace.h"
+#include "ITracer.h"
 #include "Exceptions.h"
-#include "FileTracer.h"
-#include "SyslogTracer.h"
 
 using namespace EndpointLog;
 
@@ -29,31 +28,19 @@ std::string GetFileBasename(
 }
 
 void
-Trace::Init(
-    const std::string & filepath,
-    bool createIfNotExist
+Trace::SetTracer(
+    ITracer* tracerObj
     )
 {
+    if (!tracerObj) {
+        throw std::invalid_argument("SetTracer: TracerObj cannot be NULL");
+    }
     GetLevelStrTable();
 
     if (s_logger) {
         delete s_logger;
     }
-    s_logger = new FileTracer(filepath, createIfNotExist);
-}
-
-void
-Trace::Init(
-    int syslogOption,
-    int syslogFacility
-    )
-{
-    GetLevelStrTable();
-
-    if (s_logger) {
-        delete s_logger;
-    }
-    s_logger = new SyslogTracer(syslogOption, syslogFacility);
+    s_logger = tracerObj;
 }
 
 std::string

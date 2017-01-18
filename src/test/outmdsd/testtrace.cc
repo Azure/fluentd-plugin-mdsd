@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include "Trace.h"
+#include "SyslogTracer.h"
 #include "TraceMacros.h"
 #include "testutil.h"
 
@@ -83,7 +84,7 @@ ValidateNotInSyslog(
 static void
 RunTraceTest(TraceLevel minLevel)
 {
-    Trace::Init(LOG_CONS, LOG_SYSLOG);
+    Trace::SetTracer(new SyslogTracer(LOG_CONS, LOG_SYSLOG));
     Trace::SetTraceLevel(minLevel);
 
     auto origFileSz = TestUtil::GetFileSize("/var/log/syslog");

@@ -54,6 +54,8 @@ DjsonLogItem::ComposeSchema(
         return;
     }
 
+    auto unsortedSchemaArray = ComposeSchemaArray();
+
     // sort items because they should have same schema
     CompItemInfo compItemInfo;
     std::sort(m_svlist.begin(), m_svlist.end(), compItemInfo);
@@ -64,12 +66,12 @@ DjsonLogItem::ComposeSchema(
         strm << cachedInfo.first << "," << cachedInfo.second;
     }
     else {
-        auto schemaArray = ComposeSchemaArray();
-        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, schemaArray);
+        auto sortedSchemaArray = ComposeSchemaArray();
+        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, sortedSchemaArray);
 
         // save to cache for unsorted key too
-        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, schemaArray));
-        strm << schemaId << "," << schemaArray;
+        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, unsortedSchemaArray));
+        strm << schemaId << "," << sortedSchemaArray;
     }
 }
 

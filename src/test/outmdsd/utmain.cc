@@ -3,6 +3,7 @@
 #define BOOST_TEST_MODULE "outmdsdut"
 #include <boost/test/included/unit_test.hpp>
 #include "Trace.h"
+#include "FileTracer.h"
 #include "TraceMacros.h"
 #include "testutil.h"
 
@@ -16,7 +17,7 @@ public:
         std::ostringstream strm;
         strm << TestUtil::GetCurrDir() << "/outmdsd.log";
         auto logfile = strm.str();
-        Trace::Init(logfile, true);
+        Trace::SetTracer(new FileTracer(logfile, true));
         Trace::SetTraceLevel(TraceLevel::Trace);
         Log(TraceLevel::Info, "\n\n============= start new outmdsd test ==========");
     }
