@@ -197,6 +197,30 @@ MockServer::RunEchoTask(
     m_connfdSet.insert(connfd);
     lck.unlock();
 
+    // Because RunEchoTask is called in an async task, it is better to handle
+    // exceptions at task level. Otherwise, the exceptions won't show up in
+    // master thread until task.get() is called, which could cause unexpected delays
+    // at handling client communications.
+    try {
+        StartReadLoop(connfd);
+    }
+    catch(const std::exception& ex) {
+        Log(std::string("Error: RunEchoTask() failed: ") + ex.what());
+
+        std::unique_lock<std::mutex> lck(m_connMutex);
+        m_connfdSet.erase(connfd);
+        lck.unlock();
+
+        shutdown(connfd, SHUT_RDWR);
+        close(connfd);
+    }
+}
+
+void
+MockServer::StartReadLoop(
+    int connfd
+    )
+{
     if (-1 == fcntl(connfd, F_SETFL, O_NONBLOCK)) {
         throw std::system_error(errno, std::system_category(),
             "fcntl() on fd=" + std::to_string(connfd) + " for O_NONBLOCK");
@@ -404,17 +428,6 @@ MockServer::Log(
     std::cout << now << " Mock: Th: " << tid << " " << msg << std::endl;
 }
 
-// make sure a string has no new line char '\n'
-static void
-ValidateNoNewLine(
-    const std::string & str
-    )
-{
-    if (str.find_first_of('\n') != std::string::npos) {
-        throw std::runtime_error("No newline is expected, but found in '" + str + "'");
-    }
-}
-
 std::string
 MockServer::ProcessMsgId(const std::string & msgId)
 {
@@ -466,8 +479,6 @@ MockServer::ParseMsgIds(
     size_t lastPos = 0;
     size_t leftoverPos = 0;
 
-    ValidateNoNewLine(leftover);
-
     while(true) {
         leftoverPos = lastPos;
 
@@ -480,7 +491,6 @@ MockServer::ParseMsgIds(
     }
 
     leftover = msg.substr(leftoverPos);
-    ValidateNoNewLine(leftover);
 
     return msgIds; 
 }
