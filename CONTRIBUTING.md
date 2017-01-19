@@ -10,23 +10,15 @@
 - [SWIG](http://www.swig.org/) 3.0
 
 ## How to build the code
-
-Run: 
-
-$ buildall.sh [options]
+Run:
+> $ buildall.sh [options]
 
 ## How to run full tests
-
+```
 > cd builddir/release/tests
-
-Run Ruby interface test: 
-
-> ./mdsdtest.rb
-
-Run core library unit test:
-> ./ut_outmdsd --log_level=all  --report_format=HRF --report_level=detailed --report_sink=report.txt --run_test=*/* > testlog.log 2>&1
-
-Check logs outmdsd.log and testlog.log if any error.
+> ./runtests.sh
+```
+Check logs in *.log if any error.
 
 
 ## Overview of mdsd plugin design and code structure
