@@ -59,6 +59,7 @@ private:
     void ShutdownClients();
 
     void RunEchoTask(int connfd);
+    void StartReadLoop(int connfd);
     void Log(const std::string & msg) const;
     void WriteBack(int fd, const std::string & msg);
 
