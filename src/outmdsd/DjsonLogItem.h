@@ -130,20 +130,20 @@ public:
 private:
     static IdMgr& GetIdMgr();
 
-    void ComposeSchemaAndData() const;
+    void ComposeSchemaAndData();
 
-    void ComposeSchema(std::ostringstream& strm) const;
+    void ComposeSchema(std::ostringstream& strm);
     std::string GetSchemaCacheKey() const;
     std::string ComposeSchemaArray() const;
     void ComposeDataValue(std::ostringstream& strm) const;
 
-    void ComposeFullData() const;
+    void ComposeFullData();
 
 private:
     std::string m_source;
-    mutable std::string m_schemaAndData;
-    mutable std::vector<ItemInfo> m_svlist; // contain schema and value info
-    mutable std::string m_djsonData;
+    std::string m_schemaAndData;
+    std::vector<ItemInfo> m_svlist; // contain schema and value info
+    std::string m_djsonData;
 };
 
 } // namespace

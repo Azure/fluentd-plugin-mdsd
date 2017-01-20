@@ -26,7 +26,7 @@ DjsonLogItem::GetIdMgr()
 }
 
 void
-DjsonLogItem::ComposeSchemaAndData() const
+DjsonLogItem::ComposeSchemaAndData()
 {
     std::ostringstream strm;
 
@@ -43,7 +43,7 @@ DjsonLogItem::ComposeSchemaAndData() const
 void
 DjsonLogItem::ComposeSchema(
     std::ostringstream& strm
-    ) const
+    )
 {
     IdMgr::value_type_t cachedInfo;
 
@@ -117,7 +117,7 @@ DjsonLogItem::ComposeDataValue(
 }
 
 void
-DjsonLogItem::ComposeFullData() const
+DjsonLogItem::ComposeFullData()
 {
     auto tag = GetTag();
     size_t len = 2 + m_source.size() + 2 + tag.size() + 1 + m_schemaAndData.size() + 1;
