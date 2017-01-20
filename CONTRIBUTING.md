@@ -11,12 +11,14 @@
 
 ## How to build the code
 Run:
-> $ buildall.sh [options]
+```
+$ buildall.sh [options]
+```
 
 ## How to run full tests
 ```
-> cd builddir/release/tests
-> ./runtests.sh
+$ cd builddir/release/tests
+$ ./runtests.sh
 ```
 Check logs in *.log if any error.
 

@@ -36,5 +36,10 @@ RunOutmdsdTest
 RunRubyTest
 ArchiveTestLogs
 
-echo Finished all tests at `date`. Total errors = ${TotalErrors}
-exit ${TotalErrors}
+echo Finished all tests at `date`. Total failed test suites = ${TotalErrors}
+
+if [ ${TotalErrors} != 0 ]; then
+    exit 1
+else
+    exit 0
+fi
