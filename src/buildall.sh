@@ -67,18 +67,6 @@ if [ -z "${BuildType}" ]; then
     exit 1
 fi
 
-# Install any required packages that docker image don't have yet
-# After the docker image has this, this should be removed.
-InstallPkgs()
-{
-    echo "Search required pkg. If not found, install it ..."
-    dpkg -L libazurepal-dev > /dev/null
-    if [ $? != 0 ]; then
-        sudo apt-get update
-        sudo apt-get install -y libazurepal-dev
-    fi
-}
-
 BuildWithCMake()
 {
     echo
@@ -148,7 +136,6 @@ ParseGlibcVer()
 
 echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 
-InstallPkgs
 BuildWithCMake
 ParseGlibcVer
 BuildWithMake fluent-plugin-mdsd
