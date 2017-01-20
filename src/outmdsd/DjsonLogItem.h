@@ -74,7 +74,7 @@ public:
     DjsonLogItem& operator=(DjsonLogItem&& other) = default;
 
     // Return full DJSON-formatted string
-    const char* GetData() const override;
+    const char* GetData() override;
 
     void AddData(std::string name, bool value)
     {
@@ -84,6 +84,11 @@ public:
     void AddData(std::string name, int32_t value)
     {
         m_svlist.emplace_back(std::move(name), "FT_INT32", std::to_string(value));
+    }
+
+    void AddData(std::string name, uint32_t value)
+    {
+        m_svlist.emplace_back(std::move(name), "FT_INT64", std::to_string(value));
     }
 
     void AddData(std::string name, int64_t value)
@@ -125,20 +130,20 @@ public:
 private:
     static IdMgr& GetIdMgr();
 
-    void ComposeSchemaAndData() const;
+    void ComposeSchemaAndData();
 
-    void ComposeSchema(std::ostringstream& strm) const;
+    void ComposeSchema(std::ostringstream& strm);
     std::string GetSchemaCacheKey() const;
     std::string ComposeSchemaArray() const;
     void ComposeDataValue(std::ostringstream& strm) const;
 
-    void ComposeFullData() const;
+    void ComposeFullData();
 
 private:
     std::string m_source;
-    mutable std::string m_schemaAndData;
-    mutable std::vector<ItemInfo> m_svlist; // contain schema and value info
-    mutable std::string m_djsonData;
+    std::string m_schemaAndData;
+    std::vector<ItemInfo> m_svlist; // contain schema and value info
+    std::string m_djsonData;
 };
 
 } // namespace

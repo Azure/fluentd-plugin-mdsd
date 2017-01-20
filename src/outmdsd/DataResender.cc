@@ -5,6 +5,7 @@
 #include "SocketClient.h"
 #include "Exceptions.h"
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "LogItem.h"
 
 using namespace EndpointLog;

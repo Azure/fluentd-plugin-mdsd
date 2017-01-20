@@ -1,5 +1,6 @@
 #include "outmdsd_log.h"
 #include "Trace.h"
+#include "FileTracer.h"
 
 void
 InitLogger(
@@ -7,7 +8,7 @@ InitLogger(
     bool createIfNotExist
 )
 {
-    EndpointLog::Trace::Init(logFilePath, createIfNotExist);
+    EndpointLog::Trace::SetTracer(new EndpointLog::FileTracer(logFilePath, createIfNotExist));
 }
 
 void

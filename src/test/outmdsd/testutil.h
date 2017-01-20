@@ -6,6 +6,8 @@
 #include <memory>
 #include <atomic>
 #include <future>
+#include <unordered_set>
+#include <ios>
 
 namespace TestUtil
 {
@@ -27,6 +29,19 @@ namespace TestUtil
     // wait for a task for a max amount of time. then check its status
     // Return true if finished within timeoutMS, false if otherwise.
     bool WaitForTask(std::future<void>& task, uint32_t timeoutMS);
+
+    // Get the size of a given file
+    // Throw exception if filename is empty string, or failed to open file.
+    size_t GetFileSize(const std::string & filename);
+
+    // Search a set of strings from a text file starting from 'startPos'
+    // Throw exception if filename is empty string, or if searchSet if empty,
+    // or if given file cannot be opened.
+    // Return true if all strings are found, return false if any of them not found.
+    // The items found are removed from searchSet.
+    bool SearchStrings(const std::string& filename,
+        std::streampos startPos,
+        std::unordered_set<std::string>& searchSet);
 }
 
 #endif // __TESTUTIL_H__
