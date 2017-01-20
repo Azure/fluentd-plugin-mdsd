@@ -36,7 +36,7 @@ public:
 
     virtual std::string GetTag() const { return m_tag; }
 
-    virtual const char* GetData() const = 0;
+    virtual const char* GetData() = 0;
 
     void Touch() {
         m_touchTime = std::chrono::system_clock::now();

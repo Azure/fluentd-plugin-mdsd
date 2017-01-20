@@ -43,11 +43,18 @@ FileTracer::WriteLog(
     const std::string& msg
     )
 {
-    int rtn = 0;
-    while(-1 == (rtn = write(m_fd, msg.c_str(), msg.size())) && EINTR == errno) {}
-    if (-1 == rtn) {
-        throw std::system_error(errno, std::system_category(),
-                                "write() " + m_filepath + " failed");
+    auto bytesleft = msg.size();
+    while(bytesleft) {
+        auto rtn = write(m_fd, msg.c_str()+msg.size()-bytesleft, bytesleft);
+        if (-1 == rtn) {
+            if (EINTR != errno) {
+                throw std::system_error(errno, std::system_category(),
+                                        "write() " + m_filepath + " failed");
+            }
+        }
+        else {
+            bytesleft -= rtn;
+        }
     }
 }
 

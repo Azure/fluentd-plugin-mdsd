@@ -16,7 +16,7 @@
         std::ostringstream _ss; \
         _ss << message; \
         Trace::WriteLog(level, _ss.str(), __FILE__, __LINE__); \
-    } \
+    }
 /**/
 
 #endif

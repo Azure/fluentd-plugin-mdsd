@@ -6,7 +6,7 @@
 using namespace EndpointLog;
 
 const char*
-DjsonLogItem::GetData() const
+DjsonLogItem::GetData()
 {
     if (m_djsonData.empty()) {
         if (m_schemaAndData.empty()) {
@@ -64,6 +64,7 @@ DjsonLogItem::ComposeSchema(
 
     if (GetIdMgr().GetItem(sortedKey, cachedInfo)) {
         strm << cachedInfo.first << "," << cachedInfo.second;
+        GetIdMgr().Insert(unsortedKey, std::make_pair(cachedInfo.first, unsortedSchemaArray));
     }
     else {
         auto sortedSchemaArray = ComposeSchemaArray();

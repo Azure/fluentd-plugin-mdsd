@@ -74,7 +74,7 @@ public:
     DjsonLogItem& operator=(DjsonLogItem&& other) = default;
 
     // Return full DJSON-formatted string
-    const char* GetData() const override;
+    const char* GetData() override;
 
     void AddData(std::string name, bool value)
     {
