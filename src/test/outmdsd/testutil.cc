@@ -2,6 +2,7 @@
 #include <system_error>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 extern "C" {
 #include <unistd.h>
@@ -87,4 +88,65 @@ TestUtil::WaitForTask(
 {
     auto status = task.wait_for(std::chrono::milliseconds(timeoutMS));
     return (std::future_status::ready == status);
+}
+
+size_t
+TestUtil::GetFileSize(
+    const std::string & filename
+    )
+{
+    if (filename.empty()) {
+        throw std::invalid_argument("filename arg cannot be empty string");
+    }
+
+    std::ifstream fin(filename);
+    if (!fin.is_open()) {
+        throw std::runtime_error("cannot open file '" + filename + "'");
+    }
+    fin.seekg(0, fin.end);
+    auto sz = fin.tellg();
+    fin.close();
+    return sz;
+}
+
+bool
+TestUtil::SearchStrings(
+    const std::string& filename,
+    std::streampos startPos,
+    std::unordered_set<std::string>& searchSet
+    )
+{
+    if (filename.empty()) {
+        throw std::invalid_argument("SearchStrings: filename arg cannot be empty string");
+    }
+    if (searchSet.empty()) {
+        throw std::invalid_argument("SearchStrings: searchSet cannot be empty");
+    }
+
+    std::ifstream fin(filename);
+    if (!fin.is_open()) {
+        throw std::runtime_error("SearchStrings: cannot open file '" + filename + "'");
+    }
+
+    fin.seekg(startPos);
+
+    std::string line;
+    while(getline(fin, line)) {
+        std::string foundStr;
+        bool found = false;
+        for (const auto & str : searchSet) {
+            if (line.find(str) != std::string::npos) {
+                foundStr = str;
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            searchSet.erase(foundStr);
+        }
+    }
+    fin.close();
+
+    return (searchSet.empty() == true);
 }

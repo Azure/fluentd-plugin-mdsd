@@ -7,26 +7,9 @@
 #include <sstream>
 #include <unordered_map>
 
-#define ADD_INFO_TRACE \
-    Trace _trace(TraceLevel::Info, __func__, __FILE__, __LINE__)
-/**/
-#define ADD_DEBUG_TRACE \
-    Trace _trace(TraceLevel::Debug, __func__, __FILE__, __LINE__)
-/**/
-#define ADD_TRACE_TRACE \
-    Trace _trace(TraceLevel::Trace, __func__, __FILE__, __LINE__)
-/**/
-#define Log(level, message) \
-    if (level >= Trace::GetTraceLevel()) { \
-        std::ostringstream _ss; \
-        _ss << message; \
-        Trace::WriteLog(level, _ss.str(), __FILE__, __LINE__); \
-    } \
-/**/
-
-class TraceLogger;
-
 namespace EndpointLog {
+    class ITracer;
+
     enum class TraceLevel {
         Trace,
         Debug,
@@ -88,12 +71,10 @@ namespace EndpointLog {
             }
         }
 
-        /// Initialize tracing. This function must be called before doing any tracing.
-        /// Throw exceptions if any error.
-        /// <param name="logFilePath"> log file path </param>
-        /// <param name="createIfNotExist"> If true, create the log file if it
-        /// exist. If false, assume the file already exists. </param>
-        static void Init(const std::string& logFilePath, bool createIfNotExist);
+        /// Set tracer object which implements the real logging.
+        /// NOTE: This must be called before doing any tracing.
+        /// Throw exception if any error.
+        static void SetTracer(ITracer* tracerObj);
 
         static void SetTraceLevel(TraceLevel level)
         {
@@ -113,17 +94,14 @@ namespace EndpointLog {
                              const char* filename, int lineNumber);
 
     private:
-        static std::string s_filepath;  // trace log file path
-        static bool s_createIfNotExist; // if true, create trace log file if not exist.
-
         TraceLevel m_level;
         std::string m_func;
         const char* m_srcFilename;
         int m_lineNumber;
 
         static TraceLevel s_minLevel;
-
-        static TraceLogger& GetLogger();
+        // Use a static pointer to avoid static object deinitialization order issue
+        static ITracer* s_logger;
 
         static std::unordered_map<TraceLevel, std::string, EnumClassHash>& GetLevelStrTable();
         static std::unordered_map<std::string, TraceLevel>& GetStr2LevelTable();

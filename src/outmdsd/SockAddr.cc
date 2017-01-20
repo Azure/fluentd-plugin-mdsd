@@ -6,6 +6,8 @@ extern "C" {
 }
 
 #include "SockAddr.h"
+#include "TraceMacros.h"
+#include "Trace.h"
 
 using namespace EndpointLog;
 
@@ -27,6 +29,7 @@ UnixSockAddr::UnixSockAddr(
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, socketfile.c_str(), maxLength);
+    Log(TraceLevel::Info, "Create UNIX socket with '" << socketfile << "'");
 }
 
 TcpSockAddr::TcpSockAddr(
@@ -40,4 +43,5 @@ TcpSockAddr::TcpSockAddr(
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    Log(TraceLevel::Info, "Create IP socket with port=" << port);
 }

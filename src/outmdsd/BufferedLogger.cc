@@ -2,6 +2,7 @@
 #include "ConcurrentQueue.h"
 #include "BufferedLogger.h"
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "SocketClient.h"
 #include "DataReader.h"
 #include "DataResender.h"

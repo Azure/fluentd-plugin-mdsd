@@ -6,7 +6,7 @@
 using namespace EndpointLog;
 
 const char*
-DjsonLogItem::GetData() const
+DjsonLogItem::GetData()
 {
     if (m_djsonData.empty()) {
         if (m_schemaAndData.empty()) {
@@ -26,7 +26,7 @@ DjsonLogItem::GetIdMgr()
 }
 
 void
-DjsonLogItem::ComposeSchemaAndData() const
+DjsonLogItem::ComposeSchemaAndData()
 {
     std::ostringstream strm;
 
@@ -43,7 +43,7 @@ DjsonLogItem::ComposeSchemaAndData() const
 void
 DjsonLogItem::ComposeSchema(
     std::ostringstream& strm
-    ) const
+    )
 {
     IdMgr::value_type_t cachedInfo;
 
@@ -54,6 +54,8 @@ DjsonLogItem::ComposeSchema(
         return;
     }
 
+    auto unsortedSchemaArray = ComposeSchemaArray();
+
     // sort items because they should have same schema
     CompItemInfo compItemInfo;
     std::sort(m_svlist.begin(), m_svlist.end(), compItemInfo);
@@ -62,14 +64,15 @@ DjsonLogItem::ComposeSchema(
 
     if (GetIdMgr().GetItem(sortedKey, cachedInfo)) {
         strm << cachedInfo.first << "," << cachedInfo.second;
+        GetIdMgr().Insert(unsortedKey, std::make_pair(cachedInfo.first, unsortedSchemaArray));
     }
     else {
-        auto schemaArray = ComposeSchemaArray();
-        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, schemaArray);
+        auto sortedSchemaArray = ComposeSchemaArray();
+        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, sortedSchemaArray);
 
         // save to cache for unsorted key too
-        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, schemaArray));
-        strm << schemaId << "," << schemaArray;
+        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, unsortedSchemaArray));
+        strm << schemaId << "," << sortedSchemaArray;
     }
 }
 
@@ -114,7 +117,7 @@ DjsonLogItem::ComposeDataValue(
 }
 
 void
-DjsonLogItem::ComposeFullData() const
+DjsonLogItem::ComposeFullData()
 {
     auto tag = GetTag();
     size_t len = 2 + m_source.size() + 2 + tag.size() + 1 + m_schemaAndData.size() + 1;

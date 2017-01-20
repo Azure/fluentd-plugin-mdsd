@@ -17,6 +17,7 @@ add_executable(
     testresender.cc
     testsender.cc
     testsocket.cc
+    testtrace.cc
     testutil.cc
     utmain.cc
 )

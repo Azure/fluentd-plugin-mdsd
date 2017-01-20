@@ -7,6 +7,7 @@ extern "C" {
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "Trace.h"
+#include "TraceMacros.h"
 #include "SocketClient.h"
 
 using namespace EndpointLog;
