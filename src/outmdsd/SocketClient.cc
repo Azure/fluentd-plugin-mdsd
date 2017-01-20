@@ -11,7 +11,7 @@ extern "C" {
 #include "SockAddr.h"
 #include "Exceptions.h"
 #include "Trace.h"
-
+#include "TraceMacros.h"
 
 using namespace EndpointLog;
 
