@@ -71,6 +71,9 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Reconnect_Error)
             auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
 
             BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS), "Send() index=" << i);
+            if (runTimeMS < timeoutMS) {
+                BOOST_TEST_MESSAGE("runTimeMS=" << runTimeMS << "; timeoutMS=" << timeoutMS);
+            }
         }
 
         BOOST_CHECK_LE(ntimes, client.GetNumReConnect());
@@ -227,10 +230,12 @@ DoSend(
     int nmsgs,
     const std::string & testSource,
     const std::string & testData,
-    const std::shared_ptr<CounterCV>& cv
+    const std::shared_ptr<CounterCV>& cv,
+    std::promise<void>& thReady
     )
 {
     CounterCVWrap cvwrap(cv);
+    thReady.set_value();
 
     for (int i = 0; i < nmsgs; i++) {
         std::ostringstream strm;
@@ -247,10 +252,13 @@ static void
 DoRead(
     const std::shared_ptr<SocketClient>& sockClient,
     size_t & totalRead,
-    const std::shared_ptr<CounterCV>& cv
+    const std::shared_ptr<CounterCV>& cv,
+    std::promise<void>& thReady
     )
 {
     CounterCVWrap cvwrap(cv);
+    thReady.set_value();
+
     while(true) {
         try {
             char buf[1024];
@@ -292,24 +300,39 @@ MultiSenderReaderTest(
     auto sendersCV = std::make_shared<CounterCV>(nSenders);
     auto readersCV = std::make_shared<CounterCV>(nReaders);
 
+    // use std::promise to make sure all threads are ready before
+    // master thread moves ahead
+    std::vector<std::promise<void>> thReadyList;
+    thReadyList.reserve(nSenders+nReaders);
+    for (int i = 0; i < nSenders+nReaders; i++) {
+        thReadyList.push_back(std::promise<void>());
+    }
+
     std::vector<std::future<void>> senderList;
     std::vector<std::future<void>> readerList;
 
     for (int n = 0; n < nSenders; n++) {
         auto senderT = std::async(std::launch::async, DoSend, sockClient, n,
-            nmsgs, testSource, testData, sendersCV);
+            nmsgs, testSource, testData, sendersCV, std::ref(thReadyList[n]));
         senderList.push_back(std::move(senderT));
     }
 
     size_t totalClientRead = 0;
     for (int i = 0; i < nReaders; i++) {
         auto readerT = std::async(std::launch::async, DoRead, sockClient,
-            std::ref(totalClientRead), readersCV);
+            std::ref(totalClientRead), readersCV, std::ref(thReadyList[i+nSenders]));
         readerList.push_back(std::move(readerT));
     }
 
+    // wait for all threads to be ready
+    for (auto & t : thReadyList) {
+        t.get_future().wait();
+    }
+
     // wait until all senders are finished
-    BOOST_CHECK_EQUAL(true, sendersCV->wait_for(500));
+    // NOTE: the wait timeout should depend on nmsgs, and machine hardware.
+    // Allocate enough time so tests can run on slow machines.
+    BOOST_CHECK_EQUAL(true, sendersCV->wait_for(500+nmsgs*5));
 
     // send end of test and shutdown both client and server
     sockClient->Send(TestUtil::EndOfTest().c_str());
