@@ -70,10 +70,8 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Reconnect_Error)
             auto endTime = std::chrono::system_clock::now();
             auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
 
-            BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS), "Send() index=" << i);
-            if (runTimeMS < timeoutMS) {
-                BOOST_TEST_MESSAGE("runTimeMS=" << runTimeMS << "; timeoutMS=" << timeoutMS);
-            }
+            BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS),
+                "Iteration " << i << " timed out under " << timeoutMS << " (" << runTimeMS << ") ms");
         }
 
         BOOST_CHECK_LE(ntimes, client.GetNumReConnect());
@@ -193,10 +191,8 @@ TestSendRetry()
             client.Send(testmsg.c_str());
         }
         catch(const SocketException& ex) {
-            BOOST_TEST_MESSAGE("Send() failed with index=" << i);
             continue;
         }
-        BOOST_TEST_MESSAGE("Send() succeeded with index=" << i);
         break;
     }
 
@@ -269,7 +265,6 @@ DoRead(
             totalRead += rtn;
         }
         catch(const SocketException& ex) {
-            BOOST_TEST_MESSAGE("SocketClient::Read() exception: " << ex.what());
             break;
         }
     }
@@ -332,21 +327,28 @@ MultiSenderReaderTest(
     // wait until all senders are finished
     // NOTE: the wait timeout should depend on nmsgs, and machine hardware.
     // Allocate enough time so tests can run on slow machines.
-    BOOST_CHECK_EQUAL(true, sendersCV->wait_for(500+nmsgs*5));
+    auto timeoutMS = 500 + nmsgs * 5;
+    BOOST_CHECK_MESSAGE(sendersCV->wait_for(timeoutMS),
+        "Wait for sendersCV timed out (" << timeoutMS << " ms)");
 
     // send end of test and shutdown both client and server
     sockClient->Send(TestUtil::EndOfTest().c_str());
-    bool mockServerDone = mockServer->WaitForTestsDone(500);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    auto msTimeoutMS = 500;
+    BOOST_CHECK_MESSAGE(mockServer->WaitForTestsDone(msTimeoutMS),
+        "Wait for mockServer tests to finish timed out (" << msTimeoutMS << " ms)");
 
     sockClient->Stop();
     mockServer->Stop();
 
     // wait for mock server task to finish
-    BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(serverTask, 100));
+    auto serverTaskTimeout = 100;
+    BOOST_CHECK_MESSAGE(TestUtil::WaitForTask(serverTask, serverTaskTimeout),
+        "Wait for serverTask timed out (" << serverTaskTimeout << " ms)");
 
     // wait for reader tasks to finish
-    BOOST_CHECK_EQUAL(true, readersCV->wait_for(100));
+    auto readersCVTimeout = 100;
+    BOOST_CHECK_MESSAGE(readersCV->wait_for(readersCVTimeout),
+        "Wait for readersCV timed out (" << readersCVTimeout << " ms)");
 
     sockClient->Close();
 
@@ -359,8 +361,6 @@ MultiSenderReaderTest(
     auto minServerSend = 4 * nSenders * nmsgs;
 
     auto actualServerRecv = mockServer->GetTotalBytesRead();
-    BOOST_TEST_MESSAGE("client sent(B) > " << minClientSend << "; server recv(B): "
-        << actualServerRecv << "; client read(B): " << totalClientRead);
 
     BOOST_CHECK_GT(actualServerRecv, minClientSend);
     BOOST_CHECK_GE(totalClientRead, minServerSend);

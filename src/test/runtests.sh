@@ -18,8 +18,10 @@ ConfigSyslog()
     if [ $? == 0 ]; then
         echo Configure syslog ...
         sudo chown syslog.syslog /var/log/
-        sudo rsyslogd > /dev/null 2>&1
+        sudo touch /var/log/syslog
         sudo chmod a+r /var/log/syslog
+        sudo chown syslog.adm /var/log/syslog
+        sudo rsyslogd > /dev/null 2>&1
     fi
 }
 
