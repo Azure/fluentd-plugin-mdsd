@@ -47,32 +47,16 @@ DjsonLogItem::ComposeSchema(
 {
     IdMgr::value_type_t cachedInfo;
 
-    // because most log items will share same schema, use unsorted key first
-    auto unsortedKey = GetSchemaCacheKey();
-    if (GetIdMgr().GetItem(unsortedKey, cachedInfo)) {
+    // The fields order are preserved. So schema with same names/types
+    // but in different order will be treated different schemas.
+    auto key = GetSchemaCacheKey();
+    if (GetIdMgr().GetItem(key, cachedInfo)) {
         strm << cachedInfo.first << "," << cachedInfo.second;
-        return;
-    }
-
-    auto unsortedSchemaArray = ComposeSchemaArray();
-
-    // sort items because they should have same schema
-    CompItemInfo compItemInfo;
-    std::sort(m_svlist.begin(), m_svlist.end(), compItemInfo);
-
-    auto sortedKey = GetSchemaCacheKey();
-
-    if (GetIdMgr().GetItem(sortedKey, cachedInfo)) {
-        strm << cachedInfo.first << "," << cachedInfo.second;
-        GetIdMgr().Insert(unsortedKey, std::make_pair(cachedInfo.first, unsortedSchemaArray));
     }
     else {
-        auto sortedSchemaArray = ComposeSchemaArray();
-        auto schemaId = GetIdMgr().FindOrInsert(sortedKey, sortedSchemaArray);
-
-        // save to cache for unsorted key too
-        GetIdMgr().Insert(unsortedKey, std::make_pair(schemaId, unsortedSchemaArray));
-        strm << schemaId << "," << sortedSchemaArray;
+        auto schemaArray = ComposeSchemaArray();
+        auto schemaId = GetIdMgr().FindOrInsert(key, schemaArray);
+        strm << schemaId << "," << schemaArray;
     }
 }
 

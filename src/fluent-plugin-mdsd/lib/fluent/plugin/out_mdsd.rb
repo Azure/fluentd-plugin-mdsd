@@ -77,7 +77,7 @@ class SchemaManager
         @logger = logger
 
         # schemahash contains all known schemas. 
-        # key: a string-join of the sorted json keys.
+        # key: a string-join of the json keys.
         # value: a two-element array: [SchemaId, SchemaString]
         # NOTE: SchemaId must be unique in the hash
         @schemaHash = {}
@@ -102,7 +102,7 @@ class SchemaManager
 
     # Return a two-element array [SchemaId, SchemaString]
     def get_schema_info(record)
-        hashkey = record.keys().sort().join()
+        hashkey = record.keys().join()
         value = @schemaHash[hashkey]
         if value
             return value

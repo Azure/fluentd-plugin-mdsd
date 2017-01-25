@@ -23,7 +23,7 @@ def GetLogger(logfile, socketFile)
   RemoveFile(logfile)
 
   Liboutmdsdrb::InitLogger(logfile, true)
-  Liboutmdsdrb::SetLogLevel("DEBUG")
+  Liboutmdsdrb::SetLogLevel("trace")
   eplog = Liboutmdsdrb::SocketLogger.new(socketFile, 100, 1000)
   return eplog
 end

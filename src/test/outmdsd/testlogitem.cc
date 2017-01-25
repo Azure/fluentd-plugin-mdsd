@@ -107,11 +107,12 @@ TestEtwLogItem()
     std::string str = "std::string";
     etwlog.AddData("stdstr_data", str);
 
-    const std::string expectedData = R"([["EventId","FT_INT32"],["GUID","FT_STRING"],["bool_false","FT_BOOL"],["bool_true","FT_BOOL"],["charstr_data","FT_STRING"],["double_data","FT_DOUBLE"],["int32_data","FT_INT32"],["int64_data","FT_INT64"],["stdstr_data","FT_STRING"],["time_data","FT_TIME"]],[123,"testguid",false,true,"charstr",4e-07,1,1099511627776,"std::string",[11,22]]])";
+    const std::string expectedData = R"([["GUID","FT_STRING"],["EventId","FT_INT32"],["bool_true","FT_BOOL"],["bool_false","FT_BOOL"],["int32_data","FT_INT32"],["int64_data","FT_INT64"],["double_data","FT_DOUBLE"],["time_data","FT_TIME"],["charstr_data","FT_STRING"],["stdstr_data","FT_STRING"]],["testguid",123,true,false,1,1099511627776,4e-07,[11,22],"charstr","std::string"]])";
 
     std::string actualData = etwlog.GetData();
 
-    BOOST_CHECK_EQUAL(true, actualData.find(expectedData) != std::string::npos);
+    BOOST_CHECK_MESSAGE(actualData.find(expectedData) != std::string::npos,
+        "Actual='" << actualData << "'; Expected='" << expectedData << "'");
 }
 
 BOOST_AUTO_TEST_CASE(Test_EtwLogItem_BVT)
@@ -158,30 +159,34 @@ TestEtwLogNameOrder()
 
     // Repeat same name order to item1.
     // Validate: It should have same schema ID with item1.
-    // It should use the unsorted schema order.
     EtwLogItem item2("testsource", "testguid", 123);
     item2.AddData("int32_data", 2);
     item2.AddData("bool", false);
 
+    // NOTE: GUID is added first, then EventId
     const std::string expectedData2 = schemaId +
         R"([["GUID","FT_STRING"],["EventId","FT_INT32"],["int32_data","FT_INT32"],["bool","FT_BOOL"]],["testguid",123,2,false]])";
 
     std::string actualData2 = item2.GetData();
     bool isMatch2 = actualData2.find(expectedData2) != std::string::npos;
-    BOOST_CHECK_MESSAGE(true == isMatch2, "Item2='" << item2.GetData() << "'");
+    BOOST_CHECK_MESSAGE(isMatch2, "Item2='" << item2.GetData() << "'");
 
     // Change name order from the previous items
-    // Validate: it should have same schema ID with item1.
-    // It should use sorted schema order because item3 and item1 have same sorted order.
+    // Validate: it should not have same schema ID with item1.
     EtwLogItem item3("testsource", "testguid", 123);
     item3.AddData("bool", false);
     item3.AddData("int32_data", 3);
 
-    const std::string expectedData3 = schemaId +
-        R"([["EventId","FT_INT32"],["GUID","FT_STRING"],["bool","FT_BOOL"],["int32_data","FT_INT32"]],[123,"testguid",false,3]])";
     std::string actualData3 = item3.GetData();
+    auto schemaId3 = GetSchemaId(actualData3);
+    BOOST_CHECK_NE(schemaId, schemaId3);
+
+    const std::string expectedData3 = schemaId3 +
+        R"([["GUID","FT_STRING"],["EventId","FT_INT32"],["bool","FT_BOOL"],["int32_data","FT_INT32"]],["testguid",123,false,3]])";
+
     bool isMatch3 = actualData3.find(expectedData3) != std::string::npos;
-    BOOST_CHECK_MESSAGE(true == isMatch3, "Item3='" << item3.GetData() << "'");
+    BOOST_CHECK_MESSAGE(isMatch3, "Item3: Actual='" << actualData3
+        << "'; ExpectedContain='" << expectedData3 << "'");
 }
 
 BOOST_AUTO_TEST_CASE(Test_EtwLogItem_NameOrder)
