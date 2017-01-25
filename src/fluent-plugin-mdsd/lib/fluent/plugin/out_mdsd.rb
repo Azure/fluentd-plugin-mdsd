@@ -77,7 +77,7 @@ class SchemaManager
         @logger = logger
 
         # schemahash contains all known schemas. 
-        # key: a string-join of the json keys.
+        # key: a string-join of the (json-key, value-type-name) pairs
         # value: a two-element array: [SchemaId, SchemaString]
         # NOTE: SchemaId must be unique in the hash
         @schemaHash = {}
@@ -102,7 +102,7 @@ class SchemaManager
 
     # Return a two-element array [SchemaId, SchemaString]
     def get_schema_info(record)
-        hashkey = record.keys().join()
+        hashkey = get_schema_key(record)
         value = @schemaHash[hashkey]
         if value
             return value
@@ -122,6 +122,14 @@ class SchemaManager
 
     private
 
+    def get_schema_key(record)
+        key_str = ""
+        record.each { |key, value|
+            key_str << key << "," << value.class.name << ","
+        }
+        return key_str
+    end
+
     def get_new_schema(record)
         schema_str = ""
 
@@ -129,7 +137,7 @@ class SchemaManager
             rb_typestr = value.class.name
             mdsd_typestr = @@rb2mdsdType[rb_typestr]
             if !mdsd_typestr
-                Log "Error: unsupported Ruby type #{rb_typestr}."
+                @logger.error "Error: unsupported Ruby type #{rb_typestr}.\n"
                 return nil
             end
 
@@ -151,15 +159,6 @@ class SchemaManager
             return @schema_id
         end
     end
-
-    def Log(msg)
-        if @logger
-            @logger.write msg
-        else
-            puts msg
-        end
-    end
-
 end
 
 class MdsdMsgMaker
