@@ -1,3 +1,10 @@
+PACKAGE (0.1.1) unstable; urgency=low
+  * Separate tracing impl class and tracing interface class.
+  * Implement SyslogTracer, FileTracer classes.
+  * Bug fix: diff order schema fields should be diff schemas.
+
+ -- Azure Linux Team <azlinux@microsoft.com>  Wed, 25 Jan 2017 22:00:00 +0800
+
 PACKAGE (0.1.0) unstable; urgency=low
 
   * Initial release

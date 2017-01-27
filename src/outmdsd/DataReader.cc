@@ -223,10 +223,12 @@ DataReader::ProcessTag(
         auto statusStr = GetAckStatusStr(ackStatus);
         Log(TraceLevel::Error, "unexpected mdsd ack status: " << statusStr);
     }
-
-    if (m_dataCache) {
-        if (1 != m_dataCache->Erase(tag)) {
-            Log(TraceLevel::Warning, "tag '" << tag << "' is not found in backup cache");
+    else {
+        // Only remove item from cache if ack status is 0 (Success)
+        if (m_dataCache) {
+            if (1 != m_dataCache->Erase(tag)) {
+                Log(TraceLevel::Warning, "tag '" << tag << "' is not found in backup cache");
+            }
         }
     }
 }
