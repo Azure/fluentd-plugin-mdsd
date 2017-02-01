@@ -60,12 +60,11 @@ module Fluent
         end
 
         def handle_record(tag, record)
-            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
-            if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
+            if not @mdsdLogger.SendDjson(tag, dataStr)
                 raise "Sending data (tag=#{tag} to mdsd failed"
             end
-            @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
+            @log.trace "tag='#{tag}', data='#{dataStr}'"
         end
 
     end # class OutputMdsd
@@ -180,13 +179,6 @@ class MdsdMsgMaker
         resultStr << get_record_values(record)
 
         return resultStr
-    end
-
-    # Because fluentd may use '.' in its tag, and '.' is not a valid char for many azure storage
-    # object names (like container), replace '.' so that the converted tag can be used for
-    # azure storage object names.
-    def create_mdsd_source(tag)
-        return tag.gsub(".", "-")
     end
 
     private
