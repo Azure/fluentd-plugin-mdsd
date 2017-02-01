@@ -86,12 +86,6 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         @msg_maker = MdsdMsgMaker.new(nil)
     end
 
-    def test_tag()
-        tag = "a.b.c"
-        src = @msg_maker.create_mdsd_source(tag)
-        assert_equal("a-b-c", src, "create_mdsd_source for #{tag}")
-    end
-
     def test_record()
         record1 = 
         {
