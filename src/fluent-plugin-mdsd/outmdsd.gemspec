@@ -12,5 +12,5 @@ Gem::Specification.new do |s|
                "out_mdsd_sample.conf"
               ]
     s.homepage = "https://github.com/Azure/fluentd-plugin-mdsd/"
-    s.license = "Apache License Version 2.0, January 2004"
+    s.license = "MIT License"
 end
