@@ -103,17 +103,18 @@ BuildWithCMake()
     popd
 }
 
-# usage: BuildWithMake <dir>
+# usage: BuildWithMake <dir> <options>
+# <options> are optional
 BuildWithMake()
 {
     echo
-    echo Start to build: directory=$1 ...
+    echo Start to build: directory=$1 $2 ...
     make -C $1 clean
-    make LABEL=build.${BuildName} -C $1
+    make LABEL=build.${BuildName} -C $1 $2
 
     if [ $? != 0 ]; then
         let TotalErrors+=1
-        echo Error: build $1 failed
+        echo Error: build $1 $2 failed
         exit ${TotalErrors}
     else
         echo Finished built successfully: directory=$1
@@ -123,7 +124,7 @@ BuildWithMake()
 ParseGlibcVer()
 {
     glibcver=2.9  # max GLIBC version to support
-    dirname=./builddir/release/lib
+    dirname=./${BUILDDIR}/release/lib
     echo
     echo python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
     python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
@@ -134,11 +135,32 @@ ParseGlibcVer()
     fi
 }
 
+ReleaseGemFile()
+{
+    GemReleaseDir=${BUILDDIR}/release/gem
+    Target=$1
+
+    pushd fluent-plugin-mdsd
+    for f in $(ls *.gem); do
+        mv $f ${f%.gem}-${Target}.amd64.gem
+    done
+    popd
+    mkdir -p ${GemReleaseDir}
+    mv fluent-plugin-mdsd/*.gem ${GemReleaseDir}
+}
+
 echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
 
 BuildWithCMake
 ParseGlibcVer
-BuildWithMake fluent-plugin-mdsd
+
+# build plugin against treasure data fluentd
+BuildWithMake fluent-plugin-mdsd Target=td
+ReleaseGemFile td
+# build plugin against omsagent fluentd
+BuildWithMake fluent-plugin-mdsd Target=oms
+ReleaseGemFile oms
+
 BuildWithMake debpkg
 
 echo
