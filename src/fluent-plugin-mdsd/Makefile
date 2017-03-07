@@ -1,5 +1,12 @@
 LABEL?=dev
-GEM=/opt/microsoft/omsagent/ruby/bin/fluent-gem
+Target?=td
+
+ifeq ($(Target),oms)
+  GEM=/opt/microsoft/omsagent/ruby/bin/fluent-gem
+else
+  GEM=/opt/td-agent/embedded/bin/fluent-gem
+endif
+
 MDSDGEM=fluent-plugin-mdsd
 Version=$(shell cat ../Version.txt)-$(LABEL)
 
