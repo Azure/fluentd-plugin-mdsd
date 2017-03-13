@@ -11,6 +11,10 @@ CCompiler=gcc
 CXXCompiler=g++
 BUILDDIR=builddir
 BuildName=dev
+# Valid ${Target} values are: td (for treasure data), oms (for OMSAgent)
+Target=td
+
+RUBY_INC_PATH=
 
 Usage()
 {
@@ -19,6 +23,7 @@ Usage()
     echo "    -d: build debug build."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
+    echo "    -t: fluentd target ('td' or 'oms')"
 }
 
 if [ "$#" == "0" ]; then
@@ -36,7 +41,7 @@ SetBuildType()
     fi
 }
 
-args=`getopt b:dho $*`
+args=`getopt b:dhot: $*`
 if [ $? != 0 ]; then
     Usage
     exit 1
@@ -58,20 +63,50 @@ for i; do
         -o)
             SetBuildType Release
             shift ;;
+        -t)
+            Target=$2
+            shift; shift ;;
         --) shift; break ;;
     esac
 done
+
+if [ "${Target}" != "td" ] && [ "${Target}" != "oms" ]; then
+    echo "Error: invalid -t value. Expected: 'td' or 'oms'"
+    exit 1
+fi
 
 if [ -z "${BuildType}" ]; then
     echo "Error: missing build type"
     exit 1
 fi
 
+FindRubyPath()
+{
+    if [ "${Target}" == "td" ]; then
+        RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
+    elif [ "${Target}" == "oms" ]; then
+        RubyBaseDir="/opt/microsoft/omsagent/ruby/include/ruby-"
+    else
+        echo "FindRubyPath() error: unexpected target ${Target}."
+        exit 1
+    fi
+
+    for diritem in "${RubyBaseDir}"*; do
+        [ -d "${diritem}" ] && RUBY_INC_PATH="${diritem}" && break
+    done
+
+    if [ -z "${RUBY_INC_PATH}" ]; then
+        echo "Error: failed to get value for RUBY_INC_PATH."
+    else
+        echo "Ruby include dir: ${RUBY_INC_PATH}."
+    fi
+}
+
 BuildWithCMake()
 {
     echo
     echo Start to build source code. BuildType=${BuildType} ...
-    BinDropDir=${BUILDDIR}.${BuildType}.${CCompiler}
+    BinDropDir=${BUILDDIR}.${BuildType}.${Target}
     rm -rf ${BUILDDIR} ${BinDropDir}
     mkdir ${BinDropDir}
     ln -s ${BinDropDir} ${BUILDDIR}
@@ -79,6 +114,7 @@ BuildWithCMake()
     pushd ${BinDropDir}
 
     cmake -DCMAKE_C_COMPILER=${CCompiler} -DCMAKE_CXX_COMPILER=${CXXCompiler} \
+          -DRUBY_INC_PATH=${RUBY_INC_PATH} \
           -DCMAKE_BUILD_TYPE=${BuildType} ../
 
     if [ $? != 0 ]; then
@@ -149,17 +185,14 @@ ReleaseGemFile()
     mv fluent-plugin-mdsd/*.gem ${GemReleaseDir}
 }
 
-echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
+echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} Target=${Target} ...
 
+FindRubyPath
 BuildWithCMake
 ParseGlibcVer
 
-# build plugin against treasure data fluentd
-BuildWithMake fluent-plugin-mdsd Target=td
-ReleaseGemFile td
-# build plugin against omsagent fluentd
-BuildWithMake fluent-plugin-mdsd Target=oms
-ReleaseGemFile oms
+BuildWithMake fluent-plugin-mdsd Target=${Target}
+ReleaseGemFile ${Target}
 
 BuildWithMake debpkg
 
