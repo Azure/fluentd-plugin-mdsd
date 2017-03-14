@@ -60,11 +60,12 @@ module Fluent
         end
 
         def handle_record(tag, record)
+            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
-            if not @mdsdLogger.SendDjson(tag, dataStr)
-                raise "Sending data (tag=#{tag} to mdsd failed"
+            if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
+                raise "Sending data (tag=#{tag}) to mdsd failed"
             end
-            @log.trace "tag='#{tag}', data='#{dataStr}'"
+            @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
         end
 
     end # class OutputMdsd
@@ -180,6 +181,15 @@ class MdsdMsgMaker
 
         return resultStr
     end
+
+    # Convert (unify) mdsd.syslog.** tags to mdsd.syslog so that mdsd sees only
+    # one single tag for all syslog messages. This is the use case for basic
+    # syslog messages collection. Also, it appears that tags can't be changed
+    # by a fluentd filter, so they need to be changed here in this output plugin.
+    def create_mdsd_source(tag)
+        if tag.start_with?("mdsd.syslog.")
+            return "mdsd.syslog"
+        return tag
 
     private
 
