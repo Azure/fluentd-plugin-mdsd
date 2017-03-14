@@ -23,6 +23,10 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
   2) **acktimeoutms**: max time in milli-seconds to wait for mdsd acknowledge response. Before timeout, mdsd plugin will retry periodically to resend the events to mdsd. After timeout, the events holding in mdsd plugin memory will be dropped. If acktimeoutms is 0, the plugin won't do any failure retry if it cannot receives acknowledge from mdsd.
 
+  3) **mdsd_syslog_tag_prefix**: (Optional) Prefix of fluentd tags that should be treated as mdsd syslog messages. Default: nil.
+
+  4) **unify_mdsd_syslog_tags**: (Optional) If set, unify fluentd tags starting with the above prefix to just the prefix (this is the basic mdsd syslog messages uploading scenario). Default: false.
+
 ### Usage
 
 1) Install and configure mdsd. mdsd is a separate component. Please refer to related document.
