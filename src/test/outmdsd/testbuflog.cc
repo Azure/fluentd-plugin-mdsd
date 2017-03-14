@@ -54,7 +54,7 @@ TestWhenSockServerIsDown(
     }
 
     // wait timeout depends on nitems and connection retry, plus some runtime
-    BOOST_CHECK_EQUAL(true, b.WaitUntilAllSend((connRetryTimeoutMS+10)*nitems+100));
+    BOOST_CHECK(b.WaitUntilAllSend((connRetryTimeoutMS+10)*nitems+100));
 
     BOOST_CHECK_EQUAL(0, b.GetNumTagsRead());
     BOOST_CHECK_EQUAL(0, b.GetTotalSendSuccess());
@@ -143,9 +143,9 @@ RunE2ETest(size_t nitems)
     bLogger.AddData(eot);
     totalSend += TestUtil::EndOfTest().size();
 
-    BOOST_CHECK_EQUAL(true, bLogger.WaitUntilAllSend(1000));
-    BOOST_CHECK_EQUAL(true, mockServer->WaitForTestsDone(1000));
-    BOOST_CHECK_EQUAL(true, WaitForClientCacheEmpty(bLogger, 1000));
+    BOOST_CHECK(bLogger.WaitUntilAllSend(1000));
+    BOOST_CHECK(mockServer->WaitForTestsDone(1000));
+    BOOST_CHECK(WaitForClientCacheEmpty(bLogger, 1000));
 
     mockServer->Stop();
     serverTask.get();

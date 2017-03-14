@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(Test_SocketLogger_Error)
 
         for (int i = 0; i < 5; i++) {
             bool sendOK = eplog.SendDjson("testSource", "testSchemaAndData-" + std::to_string(i+1));
-            BOOST_CHECK_EQUAL(false, sendOK);
+            BOOST_CHECK(!sendOK);
         }
     }
     catch(const std::exception & ex) {
@@ -168,7 +168,7 @@ SendDataToServer(
     totalSend += SendEndOfTestToServer(eplog);
 
     bool mockServerDone = mockServer->WaitForTestsDone(testRuntimeMS);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     mockServer->Stop();
 

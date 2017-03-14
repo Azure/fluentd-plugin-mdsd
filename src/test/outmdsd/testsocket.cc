@@ -117,7 +117,7 @@ SendDataToServer(
         delete [] buf;
 
         bool mockServerDone = mockServer->WaitForTestsDone(maxRunTimeMS);
-        BOOST_CHECK_EQUAL(true, mockServerDone);
+        BOOST_CHECK(mockServerDone);
 
         client.Stop();
         client.Close();
@@ -199,7 +199,7 @@ TestSendRetry()
     client.Send(TestUtil::EndOfTest().c_str());
 
     bool mockServerDone = mockServer->WaitForTestsDone(100);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     client.Stop();
     client.Close();

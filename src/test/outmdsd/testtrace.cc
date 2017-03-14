@@ -61,7 +61,7 @@ ValidateInSyslog(
 {
     auto foundAll = SearchInSyslog(startPos, searchSet);
 
-    BOOST_CHECK_EQUAL(true, foundAll);
+    BOOST_CHECK(foundAll);
     if (!foundAll) {
         for (const auto & str : searchSet) {
             BOOST_TEST_MESSAGE("Error: item '" << str << "' is not found in syslog.");
@@ -77,7 +77,7 @@ ValidateNotInSyslog(
 {
     auto sizeCopy = searchSet.size();
     auto foundAll = SearchInSyslog(startPos, searchSet);
-    BOOST_CHECK_EQUAL(false, foundAll);
+    BOOST_CHECK(!foundAll);
     BOOST_CHECK_EQUAL(sizeCopy, searchSet.size());
 }
 

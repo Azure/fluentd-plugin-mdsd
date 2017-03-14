@@ -69,7 +69,7 @@ SendDataToServer(int nmsgs)
         totalSend += TestUtil::EndOfTest().size();
 
         bool mockServerDone = mockServer->WaitForTestsDone(500);
-        BOOST_CHECK_EQUAL(true, mockServerDone);
+        BOOST_CHECK(mockServerDone);
 
         sockClient->Stop();
         sockClient->Close();
