@@ -19,10 +19,8 @@ module Fluent
         config_param :djsonsocket, :string
         desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
         config_param :acktimeoutms, :integer
-        desc 'Fluentd tag prefix that will be treated as mdsd syslog messages'
+        desc 'Fluentd tag prefix that will be used as mdsd source name'
         config_param :mdsd_syslog_tag_prefix, :string, default: nil
-        desc 'If true, change (unify) any tags starting with the prefix to the prefix only'
-        config_param :unify_mdsd_syslog_tags, :bool, default: false
 
         # This method is called before starting.
         def configure(conf)
@@ -186,14 +184,13 @@ class MdsdMsgMaker
         return resultStr
     end
 
-    # If configured, convert (unify) fluentd tags to a unified tag (prefix)
-    # so that mdsd sees only one single tag for all syslog messages. This is
+    # If configured, convert (unify) fluentd tags to a unified tag (prefix) so that mdsd
+    # sees only one single tag (unique source name) for all syslog messages. This is
     # the use case for basic syslog messages collection. Also, it appears
     # that tags can't be changed by a fluentd filter, so they need to be
     # changed here in this output plugin.
     def create_mdsd_source(tag)
-        unify_tags = @unify_mdsd_syslog_tags and @mdsd_syslog_tag_prefix
-        if unify_tags and tag.start_with?(@mdsd_syslog_tag_prefix)
+        if @mdsd_syslog_tag_prefix and tag.start_with?(@mdsd_syslog_tag_prefix)
             return @mdsd_syslog_tag_prefix
         return tag
 
