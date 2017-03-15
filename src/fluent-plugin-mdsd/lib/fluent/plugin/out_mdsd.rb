@@ -13,6 +13,7 @@ module Fluent
 
             @mdsdMsgMaker = nil
             @mdsdLogger = nil
+            @mdsdSyslogTagPrefix = nil
         end
 
         desc 'full path to mdsd djson socket file'
@@ -31,6 +32,7 @@ module Fluent
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms, 30000, 60000)
+            @mdsdSyslogTagPrefix = mdsd_syslog_tag_prefix
         end
 
         # This method is called before starting.
@@ -62,7 +64,7 @@ module Fluent
         end
 
         def handle_record(tag, record)
-            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag)
+            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdSyslogTagPrefix)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
             if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
                 raise "Sending data (tag=#{tag}) to mdsd failed"
@@ -189,9 +191,9 @@ class MdsdMsgMaker
     # the use case for basic syslog messages collection. Also, it appears
     # that tags can't be changed by a fluentd filter, so they need to be
     # changed here in this output plugin.
-    def create_mdsd_source(tag)
-        if @mdsd_syslog_tag_prefix and tag.start_with?(@mdsd_syslog_tag_prefix)
-            return @mdsd_syslog_tag_prefix
+    def create_mdsd_source(tag, prefix)
+        if prefix and tag.start_with?(prefix)
+            return prefix
         end
         return tag
     end
