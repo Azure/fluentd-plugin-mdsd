@@ -11,7 +11,7 @@ module Fluent
     class BufferedOutput
         def self.desc(x)
         end
-        def self.config_param(x,y)
+        def self.config_param(x,y,z=nil)
         end
     end
 end
