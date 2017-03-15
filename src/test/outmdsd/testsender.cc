@@ -142,7 +142,7 @@ RunE2ETest(size_t nitems, size_t nbytesPerItem)
     nitems++; // end of test message
 
     bool mockServerDone = mockServer->WaitForTestsDone(1000);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     mockServer->Stop();
     sender.Stop();

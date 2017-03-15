@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_Wait)
         std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
         q.push(expected);
 
-        BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(task, minRunTimeMS*5));
+        BOOST_CHECK(TestUtil::WaitForTask(task, minRunTimeMS*5));
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
@@ -108,23 +108,19 @@ WaitEmptyQueue(
     std::promise<void>& masterReady,
     std::promise<void>& threadReady,
     ConcurrentQueue<int>* q,
-    uint32_t minRunTimeMS)
+    std::atomic<bool>& stopQueue)
 {
     threadReady.set_value();
     masterReady.get_future().wait();
 
-    auto startTime = std::chrono::system_clock::now();
     const int origVal = -123;
     int actual = origVal;
     q->wait_and_pop(actual);
 
     // nothing should be popped, so value shouldn't be changed
     BOOST_CHECK_EQUAL(origVal, actual);
-
-    auto endTime = std::chrono::system_clock::now();
-    auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
-    BOOST_CHECK_GE(runTimeMS, minRunTimeMS);
-    BOOST_TEST_MESSAGE("queue wait_and_pop item=" << actual << "; runtime: " << runTimeMS);
+    // stopQueue must be set to be true by now
+    BOOST_CHECK(stopQueue.load());
 }
 
 BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_StopWait)
@@ -133,20 +129,22 @@ BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_StopWait)
         // use a promise and shared_future to sync thread startup
         std::promise<void> masterReady;
         std::promise<void> threadReady;
+        std::atomic<bool> stopQueue{false};
 
         ConcurrentQueue<int> q;
         const uint32_t minRunTimeMS = 10;
 
         auto task = std::async(std::launch::async, WaitEmptyQueue,
-            std::ref(masterReady), std::ref(threadReady), &q, minRunTimeMS);
+            std::ref(masterReady), std::ref(threadReady), &q, std::ref(stopQueue));
 
         threadReady.get_future().wait();
         masterReady.set_value();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(minRunTimeMS));
+        stopQueue = true;
         q.stop_once_empty();
 
-        BOOST_CHECK_EQUAL(true, TestUtil::WaitForTask(task, minRunTimeMS*5));
+        BOOST_CHECK(TestUtil::WaitForTask(task, minRunTimeMS*5));
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
@@ -236,9 +234,9 @@ MultiPushPopTest(
     // start all threads
     masterPromise.set_value();
 
-    BOOST_CHECK_EQUAL(true, pushCV->wait_for(400));
+    BOOST_CHECK(pushCV->wait_for(400));
     q.stop_once_empty();
-    BOOST_CHECK_EQUAL(true, popCV->wait_for(400));
+    BOOST_CHECK(popCV->wait_for(400));
 }
 
 BOOST_AUTO_TEST_CASE(Test_ConcurrentQueue_MultiThreads)
