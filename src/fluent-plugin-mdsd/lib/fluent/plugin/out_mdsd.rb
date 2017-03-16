@@ -13,7 +13,7 @@ module Fluent
 
             @mdsdMsgMaker = nil
             @mdsdLogger = nil
-            @mdsdSyslogTagPrefix = nil
+            @mdsdTagPrefix = nil
         end
 
         desc 'full path to mdsd djson socket file'
@@ -21,7 +21,7 @@ module Fluent
         desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
         config_param :acktimeoutms, :integer
         desc 'Fluentd tag prefix that will be used as mdsd source name'
-        config_param :mdsd_syslog_tag_prefix, :string, :default => nil
+        config_param :mdsd_tag_prefix, :string, :default => nil
 
         # This method is called before starting.
         def configure(conf)
@@ -32,7 +32,7 @@ module Fluent
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms, 30000, 60000)
-            @mdsdSyslogTagPrefix = mdsd_syslog_tag_prefix
+            @mdsdTagPrefix = mdsd_tag_prefix
         end
 
         # This method is called before starting.
@@ -64,7 +64,7 @@ module Fluent
         end
 
         def handle_record(tag, record)
-            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdSyslogTagPrefix)
+            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPrefix)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
             if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
                 raise "Sending data (tag=#{tag}) to mdsd failed"
