@@ -108,10 +108,12 @@ DataSender::Run()
 void
 DataSender::Send(const char* data)
 {
+    ADD_TRACE_TRACE;
     try {
         m_numSend++;
         m_socketClient->Send(data);
         m_numSuccess++;
+        Log(TraceLevel::Trace, "m_numSend=" << m_numSend << "; m_numSuccess=" << m_numSuccess);
     }
     catch(const SocketException & ex) {
         Log(TraceLevel::Info, "DataSender Send() SocketException: " << ex.what());
