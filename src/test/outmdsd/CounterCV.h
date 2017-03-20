@@ -56,6 +56,11 @@ public:
         m_cv.wait(lck, [this] () { return (0 == m_count); });
     }
 
+    uint32_t GetId() const
+    {
+        return m_count;
+    }
+
 private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
@@ -69,8 +74,14 @@ class CounterCVWrap
 public:
     CounterCVWrap(const std::shared_ptr<CounterCV>& cv) : m_cv(cv) {}
 
-    ~CounterCVWrap() {
+    ~CounterCVWrap()
+    {
         m_cv->notify_all();
+    }
+
+    uint32_t GetId() const
+    {
+        return m_cv->GetId();
     }
 
 private:
