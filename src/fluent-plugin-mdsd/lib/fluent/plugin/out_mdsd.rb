@@ -20,8 +20,8 @@ module Fluent
         config_param :djsonsocket, :string
         desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
         config_param :acktimeoutms, :integer
-        desc 'Fluentd tag prefix that will be used as mdsd source name'
-        config_param :mdsd_tag_prefix, :string, :default => nil
+        desc 'Fluentd tag regex patterns whose match (if any) will be used as mdsd source name'
+        config_param :mdsd_tag_regex_patterns, :array, :default => []
 
         # This method is called before starting.
         def configure(conf)
@@ -32,7 +32,7 @@ module Fluent
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms, 30000, 60000)
-            @mdsdTagPrefix = mdsd_tag_prefix
+            @mdsdTagPatterns = mdsd_tag_regex_patterns
         end
 
         # This method is called before starting.
@@ -64,7 +64,7 @@ module Fluent
         end
 
         def handle_record(tag, record)
-            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPrefix)
+            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPatterns)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
             if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
                 raise "Sending data (tag=#{tag}) to mdsd failed"
@@ -186,15 +186,20 @@ class MdsdMsgMaker
         return resultStr
     end
 
-    # If configured, convert (unify) fluentd tags to a unified tag (prefix) so that mdsd
-    # sees only one single tag (unique source name) for all syslog messages. This is
-    # the use case for basic syslog messages collection. Also, it appears
-    # that tags can't be changed by a fluentd filter, so they need to be
-    # changed here in this output plugin.
-    def create_mdsd_source(tag, prefix)
-        if prefix and tag.start_with?(prefix)
-            return prefix
-        end
+    # If configured, convert (unify) fluentd tags to a unified tag (regex match) so that mdsd
+    # sees only one single tag (unique source name) for all the matched fluentd tags. Basic
+    # syslog use case is OK with a prefix match (e.g., mdsd.syslog.** to mdsd.syslog), but
+    # extended syslog use case needs a pattern matching (e.g., mdsd.syslog.user.info to
+    # mdsd.syslog.user, mdsd.syslog.local1.err to mdsd.syslog.local1 : This can be
+    # expressed as regex "^mdsd\.syslog\.\w+" and the match will be returned as the
+    # corresponding mdsd source name.
+    def create_mdsd_source(tag, regex_list)
+        regex_list.each { |regex|
+            match = tag.match /#{regex}/
+            if match
+                return match[0]
+            end
+        }
         return tag
     end
 

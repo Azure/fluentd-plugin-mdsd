@@ -23,10 +23,13 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
   2) **acktimeoutms**: max time in milli-seconds to wait for mdsd acknowledge response. Before timeout, mdsd plugin will retry periodically to resend the events to mdsd. After timeout, the events holding in mdsd plugin memory will be dropped. If acktimeoutms is 0, the plugin won't do any failure retry if it cannot receives acknowledge from mdsd.
 
-  3) **mdsd_syslog_tag_prefix**: (Optional) Prefix of fluentd tags that should be treated as
-mdsd syslog messages. This prefix will be used as the mdsd source name for all fluentd tags
-starting with this prefix. If this parameter is not specified, or for tags not starting with
-this prefix, the original fluentd tag will be used as the mdsd source name. Default: nil.
+  3) **mdsd_tag_regex_patterns**: (Optional) An array of regex patterns for mdsd source name
+unification purpose. The passed will be matched against each regex, and if there's a match,
+the matched substring will be used as the resulting mdsd source name. For example, if the tag
+is `mdsd.ext_syslog.user.info` and the regex is `^mdsd\.ext_syslog\.\w+`, then `mdsd.ext_syslog.user`
+will be the mdsd source name.
+If this parameter is not specified, or for tags not matching any regexes in this array parameter,
+the original fluentd tag will be used as the mdsd source name. Default: `[]`.
 
 ### Usage
 

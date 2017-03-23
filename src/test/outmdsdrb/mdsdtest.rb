@@ -101,4 +101,23 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         expectedStr = '1,[["truekey","FT_BOOL"],["falsekey","FT_BOOL"],["intkey","FT_INT64"],["floatkey","FT_DOUBLE"],["timekey","FT_TIME"],["strkey","FT_STRING"]],[true,false,1234,3.14,[1478626843,878947000],"teststring"]'
         assert_equal(expectedStr, schemaVal, "get_schema_value_str")
     end
+
+    def test_source_name_creator()
+        regex_list = [ "^mdsd\.syslog", "^mdsd\.ext_syslog\.\\w+" ]
+        test_data = {
+            "mdsd.syslog.user.info" => "mdsd.syslog",
+            "mdsd.ext_syslog.local1.err" => "mdsd.ext_syslog.local1",
+            "mdsd.ext_syslog.syslog.crit" => "mdsd.ext_syslog.syslog",
+            "xmdsd.syslog.user.info" => "xmdsd.syslog.user.info"
+        }
+        test_data.each { |tag, expected_source_name|
+            actual_source_name = @msg_maker.create_mdsd_source(tag, regex_list)
+            assert_equal(expected_source_name, actual_source_name, "Invalid source name returned")
+        }
+        test_data2 = [ "any.tag.1", "any.tag.2" ]
+        test_data2.each { |tag|
+            actual_source_name = @msg_maker.create_mdsd_source(tag, [])
+            assert_equal(tag, actual_source_name, "Invalid source name returned")
+        }
+    end
 end
