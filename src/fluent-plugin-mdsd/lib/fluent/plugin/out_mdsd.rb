@@ -63,6 +63,10 @@ module Fluent
           @log.flush
         end
 
+private
+        # Handle a regular record, which is hash of key, value pairs.
+        # NOTE: not all types are supported. The supported data types are
+        # defined in SchemaManager class.
         def handle_record(tag, record)
             mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPatterns)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
@@ -88,7 +92,7 @@ class SchemaManager
 
         # key: Ruby object type
         # value: mdsd schema type
-        # NOTE: only supported types are listed here. Other types are not supported.
+        # NOTE: for other data types that are not included here, they'll be treated as string.
         @@rb2mdsdType = 
         {
             "TrueClass" => "FT_BOOL",
@@ -141,8 +145,7 @@ class SchemaManager
             rb_typestr = value.class.name
             mdsd_typestr = @@rb2mdsdType[rb_typestr]
             if !mdsd_typestr
-                @logger.error "Error: unsupported Ruby type #{rb_typestr}.\n"
-                return nil
+                mdsd_typestr = "FT_STRING"
             end
 
             if (schema_str == "")
@@ -221,9 +224,15 @@ class MdsdMsgMaker
         return resultStr
     end
 
+
+    # Get formatted value string accepted by mdsd dynamic json protocol.
     def get_value_by_type(value)
         if (value.kind_of? String)
-            return ('"' + value + '"')
+            # Use 'dump' to do proper escape.
+            return value.dump
+        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)
+            # Treat data structure as a string. Use 'dump' to do proper escape.
+            return value.to_s.dump
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
         else
