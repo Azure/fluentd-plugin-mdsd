@@ -13,6 +13,12 @@ The plugin should be installed using gem:
     $ sudo /PATH/TO/fluent-gem install <gemfile>
     e.g. $ sudo /PATH/TO/fluent-gem install fluent-plugin-mdsd-0.1.0.gem
 
+### Expected Data Formats
+
+The data records sent to this plugin are expected to be in a flat structure key-value pairs, where each value are primitive types like number, string, boolean, or time. Value types including Array, Hash, and Range will be dumped as strings.
+
+If this behavior doesn't meet your requirements, the recommended way is to create filter plugins for your data records.
+
 ### Configuration
 
 <a href="src/fluent-plugin-mdsd/out_mdsd_sample.conf">See configuration sample</a>
