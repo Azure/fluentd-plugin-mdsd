@@ -147,6 +147,10 @@ RunE2ETest(size_t nitems, size_t nbytesPerItem)
     mockServer->Stop();
     sender.Stop();
     incomingQueue->stop_once_empty();
+    // Wait until sender task is finished or timed out.
+    // Without this, senderTask could be in the middle of sending, such that the sender
+    // counters (e.g. GetNumSend(), GetNumSuccess(), etc) can be invalid.
+    BOOST_CHECK(TestUtil::WaitForTask(senderTask, 500));
 
     BOOST_CHECK_EQUAL(nitems, sender.GetNumSend());
     BOOST_CHECK_EQUAL(0, incomingQueue->size());
