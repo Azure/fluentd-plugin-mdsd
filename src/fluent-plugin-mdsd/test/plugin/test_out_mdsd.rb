@@ -1,5 +1,3 @@
-#!/usr/bin/ruby
-
 # The following are dummy definitions so that out_mdsd.rb can be loaded
 # successfully by require. They are not tested in this file.
 module Fluent
@@ -16,7 +14,7 @@ module Fluent
     end
 end
 
-require_relative "../../../fluent-plugin-mdsd/lib/fluent/plugin/out_mdsd"
+require_relative "../../lib/fluent/plugin/out_mdsd"
 require "test/unit"
 
 class SchemaMgrTest < Test::Unit::TestCase

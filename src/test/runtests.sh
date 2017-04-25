@@ -37,13 +37,14 @@ RunOutmdsdTest()
     fi
 }
 
-RunRubyTest()
+# The ruby code part of the plugin
+RunPluginRubyTest()
 {
-    echo Start RunRubyTest mdsdtest.rb ...
-    ./mdsdtest.rb > rubytest.log 2>&1
+    echo RunPluginRubyTest ./testpluginrb.sh ...
+    ./testpluginrb.sh > rubytest.log 2>&1
     if [ $? != 0 ]; then
         let TotalErrors+=1
-        echo Error: RunRubyTest mdsdtest.rb failed
+        echo Error: RunPluginRubyTest failed
     fi
 }
 
@@ -52,11 +53,11 @@ ArchiveTestLogs()
 {
     echo ArchiveTestLogs ...
     rm -f testresults.tar.gz
-    tar --ignore-failed-read -czf testresults.tar.gz *.log *.txt
+    tar --ignore-failed-read -czf testresults.tar.gz *.log
 }
 
 RunOutmdsdTest
-RunRubyTest
+RunPluginRubyTest
 ArchiveTestLogs
 
 echo Finished all tests at `date`. Total failed test suites = ${TotalErrors}
