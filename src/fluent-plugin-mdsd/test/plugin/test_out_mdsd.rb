@@ -1,21 +1,104 @@
-# The following are dummy definitions so that out_mdsd.rb can be loaded
-# successfully by require. They are not tested in this file.
-module Fluent
-    class Plugin
-        def self.register_output(x,y)
-        end
-    end
+require "test/unit"
+require "fluent/test"
+require "fluent/plugin/out_mdsd"
 
-    class BufferedOutput
-        def self.desc(x)
-        end
-        def self.config_param(x,y,z=nil)
+module Fluent
+    module Test
+        class DummyLogDevice
+            def path()
+                return Dir.getwd() + "/test_out_mdsd.log"
+            end
         end
     end
 end
 
-require_relative "../../lib/fluent/plugin/out_mdsd"
-require "test/unit"
+
+class OutputMdsdTest < Test::Unit::TestCase
+    def setup
+        Fluent::Test.setup
+    end
+
+    def teardown
+    end
+
+    CONFIG1 = %[
+        log_level trace
+        djsonsocket /tmp/mytestsocket
+        acktimeoutms 1
+        mdsd_tag_regex_patterns [ "^mdsd\\.syslog" ]
+    ]
+
+    CONFIG2 = %[
+        log_level trace
+        djsonsocket /tmp/mytestsocket
+        acktimeoutms 1
+        mdsd_tag_regex_patterns [ "^mdsd\\.syslog" ]
+        resend_interval_ms 30
+        conn_retry_timeout_ms 60
+    ]
+
+    def create_driver(conf = CONFIG1)
+        Fluent::Test::BufferedOutputTestDriver.new(Fluent::OutputMdsd).configure(conf)
+    end
+
+    def test_configure()
+        d = create_driver
+
+        assert_equal("trace", d.instance.log_level, "log_level")
+        assert_equal("/tmp/mytestsocket", d.instance.djsonsocket, "djsonsocket")
+        assert_equal(1, d.instance.acktimeoutms, "acktimeoutms")
+        assert_equal([ "^mdsd.syslog" ], d.instance.mdsd_tag_regex_patterns, "mdsd_tag_regex_patterns")
+    end
+
+    def test_write_with_good_socket()
+        d = create_driver
+        time = Time.parse("2011-01-02 13:14:15 UTC").to_i
+
+        record_list = [
+            {"n" => 1},
+            {"s" => "str"}
+        ]
+
+        sock_server_cmdline = Dir.getwd() + "/../builddir/release/tests/mockserver -u " + d.instance.djsonsocket
+        sock_server_pid = spawn (sock_server_cmdline)
+
+        record_list.each { |x|
+            d.emit(x, time)
+        }
+
+        actual_data = d.run
+
+        Process.kill('KILL', sock_server_pid)
+
+        expected_data = true
+        assert_equal(expected_data, actual_data, "OutputMdsd.write() with good socket")
+
+    end
+
+    def test_write_with_bad_socket()
+        d = create_driver(CONFIG2)
+        time = Time.parse("2011-01-02 13:14:15 UTC").to_i
+
+        record_list = [
+            {"s" => "bad socket"}
+        ]
+
+        record_list.each { |x|
+            d.emit(x, time)
+        }
+
+        actualException = false
+        begin
+            actual_data = d.run
+        rescue RuntimeError => ex
+            puts "\nReceived RuntimeError: " + ex.message
+            actualException = true
+        end
+
+        assert_equal(true, actualException, "OutputMdsd.write() with bad socket")
+    end
+end
+
 
 class SchemaMgrTest < Test::Unit::TestCase
     # setup test will run before each test
