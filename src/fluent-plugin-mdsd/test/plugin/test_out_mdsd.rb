@@ -59,7 +59,7 @@ class OutputMdsdTest < Test::Unit::TestCase
             {"s" => "str"}
         ]
 
-        sock_server_cmdline = Dir.getwd() + "/../builddir/release/tests/mockserver -u " + d.instance.djsonsocket
+        sock_server_cmdline = Dir.getwd() + "/../mockserver -u " + d.instance.djsonsocket
         sock_server_pid = spawn (sock_server_cmdline)
 
         record_list.each { |x|
