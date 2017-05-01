@@ -18,13 +18,13 @@ module Fluent
 
         desc 'full path to mdsd djson socket file'
         config_param :djsonsocket, :string
-        desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
+        desc 'if no ack is received from mdsd after N milliseconds, drop msg.'
         config_param :acktimeoutms, :integer
         desc 'Fluentd tag regex patterns whose match (if any) will be used as mdsd source name'
         config_param :mdsd_tag_regex_patterns, :array, :default => []
-        desc 'message resend interval in milli-seconds'
+        desc 'message resend interval in milliseconds'
         config_param :resend_interval_ms, :integer, :default => 30000
-        desc 'timeout in milli-second when connecting to djsonsocket'
+        desc 'timeout in millisecond when connecting to djsonsocket'
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
 
         # This method is called before starting.

@@ -111,7 +111,7 @@ ValidateServerResults(
 // This is to test that the logger can send and receive data reliably.
 // If the socket server has failures, data should be resent properly.
 //
-// sendDelayMS: milli-seconds to delay between each Send().
+// sendDelayMS: milliseconds to delay between each Send().
 // mockServerRestart: if true, restart MockServer in the middle to simulate mdsd failures.
 static size_t
 SendDataToServer(
@@ -182,7 +182,7 @@ SendDataToServer(
 }
 
 // Send messages to MockServer from SocketLogger.
-// sendDelayMS: milli-seconds to delay between each Send().
+// sendDelayMS: milliseconds to delay between each Send().
 // mockServerRestart: if true, restart MockServer in the middle to simulate mdsd failures.
 // validate: E2E works
 static void

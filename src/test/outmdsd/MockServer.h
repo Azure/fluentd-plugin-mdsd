@@ -38,9 +38,9 @@ public:
     // notify MockServer to stop
     void Stop();
 
-    // Close connection and sockets. Wait for N milli-seconds. Then
+    // Close connection and sockets. Wait for N milliseconds. Then
     // create new socket and connections.
-    // This is to mock socket or connecton failures.
+    // This is to mock socket or connection failures.
     void DisconnectAndRun(uint32_t disconnectTimeMS);
 
     size_t GetTotalBytesRead() const { return m_totalBytesRead; }

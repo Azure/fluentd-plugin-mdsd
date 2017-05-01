@@ -21,7 +21,7 @@ cd src
 
 ## How to run full tests
 
-Build the code fullowing "How to build the code" section.
+Build the code following "How to build the code" section.
 
 ```bash
 cd src/builddir/release/tests

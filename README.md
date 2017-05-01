@@ -29,13 +29,13 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
 - **djsonsocket**: this is the full path to mdsd dynamic json socket file.
 
-- **acktimeoutms**: max time in milli-seconds to wait for mdsd acknowledge response. Before timeout, mdsd plugin will retry periodically to resend the events to mdsd. After timeout, the events holding in mdsd plugin memory will be dropped. If acktimeoutms is 0, the plugin won't do any failure retry if it cannot receives acknowledge from mdsd.
+- **acktimeoutms**: max time in milliseconds to wait for mdsd acknowledge response. Before timeout, mdsd plugin will retry periodically to resend the events to mdsd. After timeout, the events holding in mdsd plugin memory will be dropped. If acktimeoutms is 0, the plugin won't do any failure retry if it cannot receives acknowledge from mdsd.
 
 - **mdsd_tag_regex_patterns**: (Optional) An array of regex patterns for mdsd source name unification purpose. The passed will be matched against each regex, and if there's a match, the matched substring will be used as the resulting mdsd source name. For example, if the tag is `mdsd.ext_syslog.user.info` and the regex is `^mdsd\.ext_syslog\.\w+`, then `mdsd.ext_syslog.user` will be the mdsd source name. If this parameter is not specified, or for tags not matching any regexes in this array parameter, the original fluentd tag will be used as the mdsd source name. Default: `[]`.
 
-- **resend_interval_ms**: the interval in milli-seconds that failed messages are resent to mdsd by this plugin. Default: 30,000.
+- **resend_interval_ms**: the interval in milliseconds that failed messages are resent to mdsd by this plugin. Default: 30,000.
 
-- **conn_retry_timeout_ms**: the timeout in milli-seconds to do network connection retry when connecting to mdsd process failed. Default: 60,000.
+- **conn_retry_timeout_ms**: the timeout in milliseconds to do network connection retry when connecting to mdsd process failed. Default: 60,000.
 
 ### Usage
 
