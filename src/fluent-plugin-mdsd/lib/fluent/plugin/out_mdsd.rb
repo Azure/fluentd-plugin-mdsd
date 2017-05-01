@@ -18,10 +18,14 @@ module Fluent
 
         desc 'full path to mdsd djson socket file'
         config_param :djsonsocket, :string
-        desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
+        desc 'if no ack is received from mdsd after N milliseconds, drop msg.'
         config_param :acktimeoutms, :integer
         desc 'Fluentd tag regex patterns whose match (if any) will be used as mdsd source name'
         config_param :mdsd_tag_regex_patterns, :array, :default => []
+        desc 'message resend interval in milliseconds'
+        config_param :resend_interval_ms, :integer, :default => 30000
+        desc 'timeout in millisecond when connecting to djsonsocket'
+        config_param :conn_retry_timeout_ms, :integer, :default => 60000
 
         # This method is called before starting.
         def configure(conf)
@@ -31,7 +35,8 @@ module Fluent
             Liboutmdsdrb::SetLogLevel(log_level)
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
-            @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms, 30000, 60000)
+            @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms,
+                resend_interval_ms, conn_retry_timeout_ms)
             @mdsdTagPatterns = mdsd_tag_regex_patterns
         end
 
@@ -44,7 +49,7 @@ module Fluent
         def shutdown()
             super
         end
-        
+
         # This method is called when an event reaches to Fluentd.
         # NOTE: a plugin must define this because base class doesn't have
         # default implementation.
@@ -57,10 +62,10 @@ module Fluent
         # NOTE! This method is called by internal thread, not Fluentd's main thread.
         # So IO wait doesn't affect other plugins.
         def write(chunk)
-          chunk.msgpack_each {|(tag, record)|
-            handle_record(tag, record)
-          }
-          @log.flush
+            chunk.msgpack_each {|(tag, record)|
+                handle_record(tag, record)
+            }
+            @log.flush
         end
 
 private

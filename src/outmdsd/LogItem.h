@@ -42,7 +42,7 @@ public:
         m_touchTime = std::chrono::system_clock::now();
     }
 
-    /// Return number of milli-seconds passed since the item is last touched.
+    /// Return number of milliseconds passed since the item is last touched.
     /// If never touched before, it will count from creation time.
     int GetLastTouchMilliSeconds() const 
     {

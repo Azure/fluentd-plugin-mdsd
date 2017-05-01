@@ -14,7 +14,10 @@ BuildName=dev
 # Valid ${Target} values are: td (for treasure data), oms (for OMSAgent)
 Target=td
 
+# The full path directory containing ruby headers (e.g. 'ruby.h')
 RUBY_INC_PATH=
+# The full path directory containing ruby bin (e.g. 'ruby', 'gem', etc)
+RUBY_BIN_PATH=
 
 Usage()
 {
@@ -84,8 +87,10 @@ FindRubyPath()
 {
     if [ "${Target}" == "td" ]; then
         RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
+        RUBY_BIN_PATH=/opt/td-agent/embedded/bin
     elif [ "${Target}" == "oms" ]; then
         RubyBaseDir="/opt/microsoft/omsagent/ruby/include/ruby-"
+        RUBY_BIN_PATH=/opt/microsoft/omsagent/ruby/bin
     else
         echo "FindRubyPath() error: unexpected target ${Target}."
         exit 1
@@ -171,10 +176,32 @@ ParseGlibcVer()
     fi
 }
 
+CreateGemFile()
+{
+    echo CreateGemFile ...
+    Label=build.${BuildName}
+    Version=$(cat ./Version.txt)-${Label}
+
+    pushd fluent-plugin-mdsd
+
+    cp -f ../builddir/release/lib/Liboutmdsdrb.so ./lib/fluent/plugin/Liboutmdsdrb.so
+    cp -f ../../LICENSE.txt ../../README.md .
+
+    sed "s/GEMVERSION/${Version}/g" gemspec-template > fluent-plugin-mdsd.gemspec
+    echo ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
+    ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
+    if [ $? != 0 ]; then
+        let TotalErrors+=1
+        echo Error: CreateGemFile failed
+        exit ${TotalErrors}
+    fi
+
+    popd
+}
+
 ReleaseGemFile()
 {
     GemReleaseDir=${BUILDDIR}/release/gem
-    Target=$1
 
     pushd fluent-plugin-mdsd
     for f in $(ls *.gem); do
@@ -190,9 +217,8 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} Target=${Targ
 FindRubyPath
 BuildWithCMake
 ParseGlibcVer
-
-BuildWithMake fluent-plugin-mdsd Target=${Target}
-ReleaseGemFile ${Target}
+CreateGemFile
+ReleaseGemFile
 
 BuildWithMake debpkg
 

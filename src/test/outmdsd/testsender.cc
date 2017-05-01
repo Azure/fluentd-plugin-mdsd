@@ -13,7 +13,7 @@ using namespace EndpointLog;
 
 BOOST_AUTO_TEST_SUITE(testsender)
 
-// Return runtime in milli-seconds on how long DataSender::Run() is run
+// Return runtime in milliseconds on how long DataSender::Run() is run
 static uint32_t
 RunSender(
     std::promise<void>& threadReady,

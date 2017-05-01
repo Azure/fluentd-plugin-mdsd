@@ -28,14 +28,14 @@ class BufferedLogger
 {
 public:
     /// <summary>
-    /// Contruct a logger that'll send data to a Unix domain socket.
+    /// Construct a logger that'll send data to a Unix domain socket.
     ///
     /// <param name='socketFile'> full path to socket file </param>
-    /// <param name='ackTimeoutMS'> max milli-seconds to wait for ack from socket server.
+    /// <param name='ackTimeoutMS'> max milliseconds to wait for ack from socket server.
     /// After timeout, record will be dropped from cache. If this parameter's value 
     /// is 0, no data will be cached. </param>
-    /// <param name='resendIntervalMS'>message resend interval in milli-seconds.</param>
-    /// <param name='connRetryTimeoutMS'>number of milli-seconds to timeout socket
+    /// <param name='resendIntervalMS'>message resend interval in milliseconds.</param>
+    /// <param name='connRetryTimeoutMS'>number of milliseconds to timeout socket
     /// connect() retry </param>
     /// <param name='bufferLimit'>max LogItem to buffer. 0 means no limit.</param>
     BufferedLogger(

@@ -8,8 +8,8 @@ extern "C" {
 #include "MockServer.h"
 
 struct CmdArgs {
-    uint32_t timeBeforeDisconnect; // milli-seconds
-    uint32_t timeToDisconnect; // milli-seconds
+    uint32_t timeBeforeDisconnect; // milliseconds
+    uint32_t timeToDisconnect; // milliseconds
     std::string socketFile;
 };
 
@@ -17,8 +17,8 @@ void Usage(const std::string & progname)
 {
     std::cout << "Usage:" << std::endl;
     std::cout << std::string("  ") + progname + " [options]" << std::endl;
-    std::cout << "    -b <ms>          : Wait for <ms> milli-seconds before disconnect socket." << std::endl;
-    std::cout << "    -d <ms>          : Disconnect socket after <ms> milli-seconds." << std::endl;
+    std::cout << "    -b <ms>          : Wait for <ms> milliseconds before disconnect socket." << std::endl;
+    std::cout << "    -d <ms>          : Disconnect socket after <ms> milliseconds." << std::endl;
     std::cout << "    -u <socketFile>  : Listen to a Unix socket file. Create it if not exists." << std::endl;
 }
 
