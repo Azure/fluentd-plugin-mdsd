@@ -4,6 +4,7 @@
 #include "SocketClient.h"
 #include "DataResender.h"
 #include "DjsonLogItem.h"
+#include "testutil.h"
 
 using namespace EndpointLog;
 
@@ -14,17 +15,14 @@ size_t
 StartDataResender(
     std::promise<void>& threadReady,
     const std::shared_ptr<DataResender>& resender,
-    uint32_t minRunTimeMS
+    bool& stopRunLoop
     )
 {
     threadReady.set_value();
 
-    auto startTime = std::chrono::system_clock::now();
     auto nTimerTriggered = resender->Run();
-    auto endTime = std::chrono::system_clock::now();
-    auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
-    BOOST_CHECK_GE(runTimeMS, minRunTimeMS);
-    BOOST_TEST_MESSAGE("Number of timer triggered = " << nTimerTriggered);
+    // When resender Run() is done, the stopRunLoop must be set to be true.
+    BOOST_CHECK(stopRunLoop);
     return nTimerTriggered;
 }
 
@@ -55,17 +53,25 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_EmptyCache)
 
         // To sync between main thread and StartDataResender thread
         std::promise<void> threadReady;
+        bool stopRunLoop = false;
 
         auto sockClient = std::make_shared<SocketClient>("/tmp/nosuchfile", 1);
         auto resender = CreateDataResender(sockClient, std::make_shared<ConcurrentMap<LogItemPtr>>(), 0, retryMS);
-        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, minRunTimeMS);
+        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, std::ref(stopRunLoop));
 
         // Wait until StartDataResender is ready before starting timer
         threadReady.get_future().wait();
         usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
+        stopRunLoop = true;
         resender->Stop();
+
+        // Validate that once DataResender::Stop() is called, it shouldn't take
+        // more than N milliseconds for DataResender::Run() thread to break.
+        // There is no exact value for N. The test uses some reasonable small number.
+        BOOST_CHECK(TestUtil::WaitForTask(task, 5));
+
         auto nTimerTriggered = task.get();
         BOOST_CHECK_EQUAL(nExpectedTimers, nTimerTriggered);
     }
@@ -81,18 +87,27 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_OneItem)
         auto minRunTimeMS = retryMS+retryMS/10;
 
         std::promise<void> threadReady;
+        bool stopRunLoop = false;
 
         auto sockClient = std::make_shared<SocketClient>("/tmp/nosuchfile", 1);
         auto dataCache = std::make_shared<ConcurrentMap<LogItemPtr>>();
         auto resender = CreateDataResender(sockClient, dataCache, 10, retryMS);
-        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, minRunTimeMS);
+        auto task = std::async(std::launch::async, StartDataResender, std::ref(threadReady), resender, std::ref(stopRunLoop));
 
         // Wait until StartDataResender is ready before starting timer
         threadReady.get_future().wait();
         usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
+        // resender->Stop() should stop the Run() loop of resender.
+        stopRunLoop = true;
         resender->Stop();
+
+        // Validate that once DataResender::Stop() is called, it shouldn't take
+        // more than N milliseconds for DataResender::Run() thread to break.
+        // There is no exact value for N. The test uses some reasonable small number.
+        BOOST_CHECK(TestUtil::WaitForTask(task, 5));
+
         auto nTimerTriggered = task.get();
         BOOST_CHECK_EQUAL(1, nTimerTriggered);
 

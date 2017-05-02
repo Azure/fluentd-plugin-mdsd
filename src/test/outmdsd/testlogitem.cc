@@ -4,6 +4,7 @@
 #include "DjsonLogItem.h"
 #include "EtwLogItem.h"
 #include "IdMgr.h"
+#include "testutil.h"
 
 using namespace EndpointLog;
 
@@ -39,9 +40,14 @@ BOOST_AUTO_TEST_CASE(Test_LogItem_CacheTime)
         DjsonLogItem item(source, schemaAndData);
         item.Touch();
         int nexpectedMS = 20;
-        usleep(nexpectedMS*1000);
-        auto actualMS = item.GetLastTouchMilliSeconds();
-        BOOST_CHECK_LE(abs(actualMS - nexpectedMS), 1);
+
+        // Only compare the time when usleep() succeeds.
+        if (0 == usleep(nexpectedMS*1000)) {
+            auto actualMS = item.GetLastTouchMilliSeconds();
+            // sleep given time is never accurate. So allow some buffer.
+            BOOST_CHECK_MESSAGE(abs(actualMS - nexpectedMS) <= 3,
+                "actualMS=" << actualMS << "; nexpectedMS=" << nexpectedMS);
+        }
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());

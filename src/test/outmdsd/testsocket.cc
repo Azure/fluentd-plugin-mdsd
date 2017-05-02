@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Read)
         char buf[64];
 
         const int timeoutMS = 10;
-        auto startTime = std::chrono::system_clock::now();
+        auto startTime = std::chrono::steady_clock::now();
         BOOST_CHECK_THROW(sc.Read(buf, sizeof(buf), timeoutMS), SocketException);
-        auto endTime = std::chrono::system_clock::now();
+        auto endTime = std::chrono::steady_clock::now();
         auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
         BOOST_CHECK_GE(runTimeMS, timeoutMS);
     }
@@ -65,9 +65,9 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Reconnect_Error)
         const char* testData = "SocketClient test data";
         int ntimes = 4;
         for (int i = 0; i < ntimes; i++) {
-            auto startTime = std::chrono::system_clock::now();
+            auto startTime = std::chrono::steady_clock::now();
             BOOST_CHECK_THROW(client.Send(testData), SocketException);
-            auto endTime = std::chrono::system_clock::now();
+            auto endTime = std::chrono::steady_clock::now();
             auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
 
             BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS),

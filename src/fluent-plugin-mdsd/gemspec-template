@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
       "test/plugin/test_out_mdsd.rb"
     ]
     s.homepage = "https://github.com/Azure/fluentd-plugin-mdsd/"
-    s.license = "MIT License"
+    s.license = "MIT"
 
     s.add_dependency "fluentd", "~> 0.12.0"
     s.add_development_dependency "rake"
