@@ -26,8 +26,6 @@ SocketClient::SocketClient(
     if (0 == m_connRetryTimeoutMS) {
         throw std::invalid_argument("SocketClient: connect retry timeout must be non-zero.");
     }
-    m_lastConnTime.tv_sec = 0;
-    m_lastConnTime.tv_usec = 0;
 }
 
 SocketClient::SocketClient(
@@ -37,8 +35,6 @@ SocketClient::SocketClient(
     m_sockaddr(std::make_shared<TcpSockAddr>(port)),
     m_connRetryTimeoutMS(connRetryTimeoutMS)
 {
-    m_lastConnTime.tv_sec = 0;
-    m_lastConnTime.tv_usec = 0;
 }
 
 SocketClient::~SocketClient()
@@ -80,7 +76,6 @@ SocketClient::SetupSocketConnect()
         return;
     }
 
-    (void) gettimeofday(&m_lastConnTime, 0);
     m_numConnect++;
 
     auto sockRtn = socket(m_sockaddr->GetDomain(), SOCK_STREAM | O_NONBLOCK, 0);
@@ -99,30 +94,16 @@ SocketClient::SetupSocketConnect()
 }
 
 static unsigned int
-GetDiffMilliSeconds(
-    const struct timeval& from,
-    const struct timeval& to)
-{
-    int n = ( (to.tv_sec - from.tv_sec) * 1000 + (to.tv_usec -  from.tv_usec) / 1000 );
-    if (n < 0) {
-        n *= (-1);
-    }
-    return n;
-}
-
-static unsigned int
 GetRuntimeInMS(
-    const struct timeval & startTime
+    const std::chrono::steady_clock::time_point & startTime
     )
 {
-    struct timeval currTime;
-    (void) gettimeofday(&currTime, 0);
-    return GetDiffMilliSeconds(startTime, currTime);
+    return (std::chrono::steady_clock::now() - startTime) / std::chrono::milliseconds(1);
 }
 
 bool
 SocketClient::IsRetryTimeout(
-    const struct timeval & startTime
+    const std::chrono::steady_clock::time_point & startTime
     ) const
 {
     auto runtimeMS = GetRuntimeInMS(startTime);
@@ -142,8 +123,7 @@ SocketClient::Connect()
         return;
     }
 
-    struct timeval startTime;
-    (void) gettimeofday(&startTime, 0);
+    std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
     std::lock_guard<std::mutex> lock(m_fdMutex);
 

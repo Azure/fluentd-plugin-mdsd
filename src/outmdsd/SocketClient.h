@@ -8,10 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <random>
-
-extern "C" {
-#include <sys/time.h>
-}
+#include <chrono>
 
 namespace EndpointLog {
 
@@ -109,7 +106,7 @@ private:
 
     /// Return true if the time from 'startTime' to 'now' is bigger or equal to
     /// m_connRetryTimeoutMS. Return false otherwise.
-    bool IsRetryTimeout(const struct timeval & startTime) const;
+    bool IsRetryTimeout(const std::chrono::steady_clock::time_point & startTime) const;
 
     /// Wait some time using exponential delay policy before next connect() retry.
     /// <param name="maxWaitMS"> max milliseconds to wait</param>
@@ -141,8 +138,6 @@ private:
     std::atomic<int> m_sockfd{INVALID_SOCKET};
     std::mutex m_fdMutex;  // protect sockfd at socket creation/close time.
     std::mutex m_sendMutex; // avoid interleaved message in multi Send() at the same time.
-
-    struct timeval m_lastConnTime; // last time to create a new socket. used for delay policy.
 
     // SocketClient has several APIs that'll block for certain things to be ready. For example,
     // poll() for I/O, and Read() for valid socket fd, m_stopClient is used

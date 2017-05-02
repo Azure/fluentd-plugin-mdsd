@@ -64,7 +64,6 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_EmptyCache)
         usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
-        // rsender->Stop() should stop the Run() loop of resender.
         stopRunLoop = true;
         resender->Stop();
 
@@ -100,7 +99,7 @@ BOOST_AUTO_TEST_CASE(Test_DataResender_OneItem)
         usleep(minRunTimeMS*1000);
 
         sockClient->Stop();
-        // rsender->Stop() should stop the Run() loop of resender.
+        // resender->Stop() should stop the Run() loop of resender.
         stopRunLoop = true;
         resender->Stop();
 

@@ -22,7 +22,7 @@ class LogItem
 public:
     LogItem() :
     m_tag(std::to_string(++LogItem::s_counter)),
-    m_touchTime(std::chrono::system_clock::now())
+    m_touchTime(std::chrono::steady_clock::now())
     {
     }
 
@@ -39,20 +39,20 @@ public:
     virtual const char* GetData() = 0;
 
     void Touch() {
-        m_touchTime = std::chrono::system_clock::now();
+        m_touchTime = std::chrono::steady_clock::now();
     }
 
     /// Return number of milliseconds passed since the item is last touched.
     /// If never touched before, it will count from creation time.
     int GetLastTouchMilliSeconds() const 
     {
-        auto now = std::chrono::system_clock::now();
+        auto now = std::chrono::steady_clock::now();
         return (now - m_touchTime) / std::chrono::milliseconds(1);
     }
 
 private:
     std::string m_tag;   // Tag to the log item.
-    std::chrono::system_clock::time_point m_touchTime; // last touch time
+    std::chrono::steady_clock::time_point m_touchTime; // last touch time
 
     static std::atomic<uint64_t> s_counter; // counter of number of logItem created.
 };

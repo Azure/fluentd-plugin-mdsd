@@ -95,7 +95,6 @@ BOOST_AUTO_TEST_CASE(Test_SocketReader_Error)
         auto sockClient = std::make_shared<SocketClient>(socketfile, 1);
         auto dataCache = std::make_shared<ConcurrentMap<LogItemPtr>>();
 
-        const uint32_t minRunTimeMS = 100;
         std::promise<void> threadReady;
         bool stopRunLoop = false;
 
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(Test_SocketReader_Error)
         // wait until StartSocketReader thread starts
         threadReady.get_future().wait();
 
-        usleep(minRunTimeMS*1000);
+        usleep(100*1000);
 
         sockClient->Stop();
         // sockReader->Stop() should break sockReader's Run() loop.
