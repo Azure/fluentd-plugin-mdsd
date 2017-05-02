@@ -26,6 +26,7 @@ class OutputMdsdTest < Test::Unit::TestCase
         djsonsocket /tmp/mytestsocket
         acktimeoutms 1
         mdsd_tag_regex_patterns [ "^mdsd\\.syslog" ]
+        emit_timestamp_name testtimestamp
     ]
 
     CONFIG2 = %[
@@ -48,6 +49,7 @@ class OutputMdsdTest < Test::Unit::TestCase
         assert_equal("/tmp/mytestsocket", d.instance.djsonsocket, "djsonsocket")
         assert_equal(1, d.instance.acktimeoutms, "acktimeoutms")
         assert_equal([ "^mdsd.syslog" ], d.instance.mdsd_tag_regex_patterns, "mdsd_tag_regex_patterns")
+        assert_equal("testtimestamp", d.instance.emit_timestamp_name, "emit_timestamp_name")
     end
 
     def test_write_with_good_socket()
@@ -115,17 +117,17 @@ class SchemaMgrTest < Test::Unit::TestCase
             "falsekey" => false,
             "intkey" => 1234,
             "floatkey" => 3.14,
-            "timekey" => Time.now,
             "strkey" => "teststring",
             "arraykey" => [{'a'=>1}],
             "hashkey" => {1=>2},
-            "rangekey" => (1...3)
+            "rangekey" => (1...3),
+            "timekey" => Time.now,
         }
 
         schema_obj = @schema_mgr.get_schema_info(record)
         assert_equal(1, schema_obj[0], "first schema id")
 
-        expected_str = '[["truekey","FT_BOOL"],["falsekey","FT_BOOL"],["intkey","FT_INT64"],["floatkey","FT_DOUBLE"],["timekey","FT_TIME"],["strkey","FT_STRING"],["arraykey","FT_STRING"],["hashkey","FT_STRING"],["rangekey","FT_STRING"]]'
+        expected_str = '[8,["truekey","FT_BOOL"],["falsekey","FT_BOOL"],["intkey","FT_INT64"],["floatkey","FT_DOUBLE"],["strkey","FT_STRING"],["arraykey","FT_STRING"],["hashkey","FT_STRING"],["rangekey","FT_STRING"],["timekey","FT_TIME"]]'
         assert_equal(expected_str, schema_obj[1], "schema string")
         puts "schema_str: '#{schema_obj[1]}'"
     end
@@ -141,7 +143,7 @@ class SchemaMgrTest < Test::Unit::TestCase
         schema_obj2 = @schema_mgr.get_schema_info(record)
 
         assert_equal(1, schema_obj1[0], "second schema id")
-        assert_equal('[["strkey","FT_STRING"],["intkey","FT_INT64"]]', schema_obj1[1], "schema string")
+        assert_equal('[1,["strkey","FT_STRING"],["intkey","FT_INT64"]]', schema_obj1[1], "schema string")
 
         assert_equal(schema_obj1, schema_obj2, "dup record schema")
         assert_equal(1, @schema_mgr.size(), "schema mgr size")
@@ -155,7 +157,7 @@ class SchemaMgrTest < Test::Unit::TestCase
             schema_obj = @schema_mgr.get_schema_info(record)
             assert_equal(n, schema_obj[0], "schema id #{n}")
 
-            expected_str = '[["' + tmpstr + '","FT_INT64"]]'
+            expected_str = '[0,["' + tmpstr + '","FT_INT64"]]'
             assert_equal(expected_str, schema_obj[1], "schema str #{n}")
         }
 
@@ -182,7 +184,7 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         }
 
         schemaVal = @msg_maker.get_schema_value_str(record1)
-        expectedStr = '1,[["truekey","FT_BOOL"],["falsekey","FT_BOOL"],["intkey","FT_INT64"],["floatkey","FT_DOUBLE"],["timekey","FT_TIME"],["strkey","FT_STRING"]],[true,false,1234,3.14,[1478626843,878947000],"teststring"]'
+        expectedStr = '1,[5,["truekey","FT_BOOL"],["falsekey","FT_BOOL"],["intkey","FT_INT64"],["floatkey","FT_DOUBLE"],["timekey","FT_TIME"],["strkey","FT_STRING"]],[true,false,1234,3.14,[1478626843,878947000],"teststring"]'
         assert_equal(expectedStr, schemaVal, "get_schema_value_str")
     end
 
@@ -195,7 +197,7 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         }
 
         schemaVal = @msg_maker.get_schema_value_str(record)
-        expectedStr = '1,[["dquotekey","FT_STRING"],["squotekey","FT_STRING"],["arraykey","FT_STRING"]],["A\"B","C\"D","[\"a\"]"]'
+        expectedStr = '1,[2,["dquotekey","FT_STRING"],["squotekey","FT_STRING"],["arraykey","FT_STRING"]],["A\"B","C\"D","[\"a\"]"]'
         assert_equal(expectedStr, schemaVal, "get_schema_value_str")
     end
 
@@ -204,11 +206,12 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         {
             "arraykey" => [1],
             "hashkey" => {1=>2},
-            "rangekey" => (1...4)
+            "rangekey" => (1...4),
+            "emittime" => Time.at(123)
         }
 
         schemaVal = @msg_maker.get_schema_value_str(record)
-        expectedStr = '1,[["arraykey","FT_STRING"],["hashkey","FT_STRING"],["rangekey","FT_STRING"]],["[1]","{1=>2}","1...4"]'
+        expectedStr = '1,[3,["arraykey","FT_STRING"],["hashkey","FT_STRING"],["rangekey","FT_STRING"],["emittime","FT_TIME"]],["[1]","{1=>2}","1...4",[123,0]]'
         assert_equal(expectedStr, schemaVal, "get_schema_value_str")
     end
 

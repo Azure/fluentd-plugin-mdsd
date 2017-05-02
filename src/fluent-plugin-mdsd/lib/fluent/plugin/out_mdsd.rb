@@ -26,6 +26,8 @@ module Fluent
         config_param :resend_interval_ms, :integer, :default => 30000
         desc 'timeout in millisecond when connecting to djsonsocket'
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
+        desc 'the field name for the event emit time stamp'
+        config_param :emit_timestamp_name, :string, :default => "EmitTimestamp"
 
         # This method is called before starting.
         def configure(conf)
@@ -51,10 +53,11 @@ module Fluent
         end
 
         # This method is called when an event reaches to Fluentd.
+        # time: this is an integer, Unix time_t. Number of seconds since 1/1/1970 UTC.
         # NOTE: a plugin must define this because base class doesn't have
         # default implementation.
         def format(tag, time, record)
-            [tag, record].to_msgpack
+            [tag, time, record].to_msgpack
         end
 
         # This method is called every flush interval.
@@ -62,7 +65,10 @@ module Fluent
         # NOTE! This method is called by internal thread, not Fluentd's main thread.
         # So IO wait doesn't affect other plugins.
         def write(chunk)
-            chunk.msgpack_each {|(tag, record)|
+            chunk.msgpack_each {|(tag, time, record)|
+                # Ruby (version >= 1.9) hash preserves insertion order. So the following item is
+                # the last item when iterating the 'record' hash.
+                record[emit_timestamp_name] = Time.at(time)
                 handle_record(tag, record)
             }
             @log.flush
@@ -146,6 +152,8 @@ class SchemaManager
     def get_new_schema(record)
         schema_str = ""
 
+        # the last element is the precise time stamp field
+        time_field_index = record.size() - 1
         record.each { |key, value|
             rb_typestr = value.class.name
             mdsd_typestr = @@rb2mdsdType[rb_typestr]
@@ -154,7 +162,7 @@ class SchemaManager
             end
 
             if (schema_str == "")
-                schema_str << "["
+                schema_str << "[" << time_field_index.to_s << ","
             else
                 schema_str << ","
             end
@@ -182,11 +190,10 @@ class MdsdMsgMaker
     # Input: ruby tag and ruby record
     # Output: a string for mdsd djson including schema info and actual data.
     # Example output:
-    # 3,[["timestamp","FT_TIME"],["message","FT_STRING"]],[[1477777,542323],"This is syslog msg"]]
+    # 3,[1,["message","FT_STRING"],["EmitTimestamp","FT_TIME"]],["This is syslog msg",[1493671442,0]]]
     #
     def get_schema_value_str(record)
         resultStr = ""
-
         schema_obj = @schema_mgr.get_schema_info(record)
         resultStr << schema_obj[0].to_s << "," << schema_obj[1] << ","
         resultStr << get_record_values(record)
