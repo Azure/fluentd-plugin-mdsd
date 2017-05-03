@@ -37,6 +37,8 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
 - **conn_retry_timeout_ms**: the timeout in milliseconds to do network connection retry when connecting to mdsd process failed. Default: 60,000.
 
+- **emit_timestamp_name**: the field name for the event emit time stamp. Default: "EmitTimestamp".
+
 ### Usage
 
 1. Install and configure mdsd. mdsd is a separate component. Please refer to related document.
