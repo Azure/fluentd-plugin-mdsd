@@ -27,7 +27,7 @@ module Fluent
         desc 'timeout in millisecond when connecting to djsonsocket'
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
         desc 'the field name for the event emit time stamp'
-        config_param :emit_timestamp_name, :string, :default => "EmitTimestamp"
+        config_param :emit_timestamp_name, :string, :default => "FluentdIngestTimestamp"
 
         # This method is called before starting.
         def configure(conf)
