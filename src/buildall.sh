@@ -11,6 +11,13 @@ CCompiler=gcc
 CXXCompiler=g++
 BUILDDIR=builddir
 BuildName=dev
+# Valid ${Target} values are: td (for treasure data), oms (for OMSAgent)
+Target=td
+
+# The full path directory containing ruby headers (e.g. 'ruby.h')
+RUBY_INC_PATH=
+# The full path directory containing ruby bin (e.g. 'ruby', 'gem', etc)
+RUBY_BIN_PATH=
 
 Usage()
 {
@@ -19,6 +26,7 @@ Usage()
     echo "    -d: build debug build."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
+    echo "    -t: fluentd target ('td' or 'oms')"
 }
 
 if [ "$#" == "0" ]; then
@@ -36,7 +44,7 @@ SetBuildType()
     fi
 }
 
-args=`getopt b:dho $*`
+args=`getopt b:dhot: $*`
 if [ $? != 0 ]; then
     Usage
     exit 1
@@ -58,20 +66,52 @@ for i; do
         -o)
             SetBuildType Release
             shift ;;
+        -t)
+            Target=$2
+            shift; shift ;;
         --) shift; break ;;
     esac
 done
+
+if [ "${Target}" != "td" ] && [ "${Target}" != "oms" ]; then
+    echo "Error: invalid -t value. Expected: 'td' or 'oms'"
+    exit 1
+fi
 
 if [ -z "${BuildType}" ]; then
     echo "Error: missing build type"
     exit 1
 fi
 
+FindRubyPath()
+{
+    if [ "${Target}" == "td" ]; then
+        RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
+        RUBY_BIN_PATH=/opt/td-agent/embedded/bin
+    elif [ "${Target}" == "oms" ]; then
+        RubyBaseDir="/opt/microsoft/omsagent/ruby/include/ruby-"
+        RUBY_BIN_PATH=/opt/microsoft/omsagent/ruby/bin
+    else
+        echo "FindRubyPath() error: unexpected target ${Target}."
+        exit 1
+    fi
+
+    for diritem in "${RubyBaseDir}"*; do
+        [ -d "${diritem}" ] && RUBY_INC_PATH="${diritem}" && break
+    done
+
+    if [ -z "${RUBY_INC_PATH}" ]; then
+        echo "Error: failed to get value for RUBY_INC_PATH."
+    else
+        echo "Ruby include dir: ${RUBY_INC_PATH}."
+    fi
+}
+
 BuildWithCMake()
 {
     echo
     echo Start to build source code. BuildType=${BuildType} ...
-    BinDropDir=${BUILDDIR}.${BuildType}.${CCompiler}
+    BinDropDir=${BUILDDIR}.${BuildType}.${Target}
     rm -rf ${BUILDDIR} ${BinDropDir}
     mkdir ${BinDropDir}
     ln -s ${BinDropDir} ${BUILDDIR}
@@ -79,6 +119,7 @@ BuildWithCMake()
     pushd ${BinDropDir}
 
     cmake -DCMAKE_C_COMPILER=${CCompiler} -DCMAKE_CXX_COMPILER=${CXXCompiler} \
+          -DRUBY_INC_PATH=${RUBY_INC_PATH} \
           -DCMAKE_BUILD_TYPE=${BuildType} ../
 
     if [ $? != 0 ]; then
@@ -103,17 +144,18 @@ BuildWithCMake()
     popd
 }
 
-# usage: BuildWithMake <dir>
+# usage: BuildWithMake <dir> <options>
+# <options> are optional
 BuildWithMake()
 {
     echo
-    echo Start to build: directory=$1 ...
+    echo Start to build: directory=$1 $2 ...
     make -C $1 clean
-    make LABEL=build.${BuildName} -C $1
+    make LABEL=build.${BuildName} -C $1 $2
 
     if [ $? != 0 ]; then
         let TotalErrors+=1
-        echo Error: build $1 failed
+        echo Error: build $1 $2 failed
         exit ${TotalErrors}
     else
         echo Finished built successfully: directory=$1
@@ -123,7 +165,7 @@ BuildWithMake()
 ParseGlibcVer()
 {
     glibcver=2.9  # max GLIBC version to support
-    dirname=./builddir/release/lib
+    dirname=./${BUILDDIR}/release/lib
     echo
     echo python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
     python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
@@ -134,11 +176,50 @@ ParseGlibcVer()
     fi
 }
 
-echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} ...
+CreateGemFile()
+{
+    echo CreateGemFile ...
+    Label=build.${BuildName}
+    Version=$(cat ./Version.txt)-${Label}
 
+    pushd fluent-plugin-mdsd
+
+    cp -f ../builddir/release/lib/Liboutmdsdrb.so ./lib/fluent/plugin/Liboutmdsdrb.so
+    cp -f ../../LICENSE.txt ../../README.md .
+
+    sed "s/GEMVERSION/${Version}/g" gemspec-template > fluent-plugin-mdsd.gemspec
+    echo ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
+    ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
+    if [ $? != 0 ]; then
+        let TotalErrors+=1
+        echo Error: CreateGemFile failed
+        exit ${TotalErrors}
+    fi
+
+    popd
+}
+
+ReleaseGemFile()
+{
+    GemReleaseDir=${BUILDDIR}/release/gem
+
+    pushd fluent-plugin-mdsd
+    for f in $(ls *.gem); do
+        mv $f ${f%.gem}-${Target}.amd64.gem
+    done
+    popd
+    mkdir -p ${GemReleaseDir}
+    mv fluent-plugin-mdsd/*.gem ${GemReleaseDir}
+}
+
+echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} Target=${Target} ...
+
+FindRubyPath
 BuildWithCMake
 ParseGlibcVer
-BuildWithMake fluent-plugin-mdsd
+CreateGemFile
+ReleaseGemFile
+
 BuildWithMake debpkg
 
 echo

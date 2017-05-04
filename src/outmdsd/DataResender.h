@@ -29,9 +29,9 @@ public:
     /// <param name="sockClient"> shared socket client object</param>
     /// <param name="dataCache"> shared cache. DataResender reads and removes data from it.
     /// Other threads will add items to it.</param>
-    /// <param name="ackTimeoutMS">max milli-seconds to wait for socket server acknowledge
+    /// <param name="ackTimeoutMS">max milliseconds to wait for socket server acknowledge
     /// before removing data from cache. </param>
-    /// <param name="resendIntervalMS">milli-seconds to do resending</param>
+    /// <param name="resendIntervalMS">milliseconds to do resending</param>
     DataResender(
         const std::shared_ptr<SocketClient> & sockClient,
         const std::shared_ptr<ConcurrentMap<LogItemPtr>> & dataCache,
@@ -80,11 +80,11 @@ private:
     std::shared_ptr<ConcurrentMap<LogItemPtr>> m_dataCache;
 
     unsigned int m_ackTimeoutMS;       // if ack is not received in this time, item is removed from cache.
-    unsigned int m_resendIntervalMS;   // cached items resending interval in milli-seconds.
+    unsigned int m_resendIntervalMS;   // cached items resending interval in milliseconds.
 
     std::atomic<bool> m_stopMe { false }; // A flag used to stop resending loop.
 
-    /// m_timerMutex and m_timerCV are used to create an interruptable blocking wait.
+    /// m_timerMutex and m_timerCV are used to create an interruptible blocking wait.
     std::mutex m_timerMutex;
     std::condition_variable m_timerCV;
 

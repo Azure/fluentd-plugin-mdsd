@@ -1,0 +1,31 @@
+<!--
+mdsd configuration XML sample that can be used with out_mdsd_sample_for*.conf
+-->
+<MonitoringManagement eventVersion="2" namespace="" timestamp="2014-12-01T20:00:00.000" version="1.0">
+  <Accounts>
+    <Account account="mydiagstorageaccount" isDefault="true" key="<<<storage_account_key>>>" moniker="moniker" />
+  </Accounts>
+  <Management defaultRetentionInDays="90" eventVolume="Medium">
+    <Identity>
+      <IdentityComponent name="DeploymentId">xxxxxxxxxxxxxxxxxxx</IdentityComponent>
+      <IdentityComponent name="Host" useComputerName="true" />
+    </Identity>
+    <AgentResourceUsage diskQuotaInMB="50000" />
+  </Management>
+
+  <Sources>
+    <Source name="mdsd.syslog" dynamic_schema="true" />
+    <Source name="mdsd.filelog" dynamic_schema="true" />
+  </Sources>
+
+  <Events>
+    <MdsdEvents>
+      <MdsdEventSource source="mdsd.syslog">
+        <RouteEvent dontUsePerNDayTable="true" eventName="FluentdSyslog" priority="High" />
+      </MdsdEventSource>
+      <MdsdEventSource source="mdsd.filelog">
+        <RouteEvent dontUsePerNDayTable="true" eventName="FluentdFilelog" priority="High" />
+      </MdsdEventSource>
+    </MdsdEvents>
+  </Events>
+</MonitoringManagement>

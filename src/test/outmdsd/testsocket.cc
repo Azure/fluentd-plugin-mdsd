@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Read)
         char buf[64];
 
         const int timeoutMS = 10;
-        auto startTime = std::chrono::system_clock::now();
+        auto startTime = std::chrono::steady_clock::now();
         BOOST_CHECK_THROW(sc.Read(buf, sizeof(buf), timeoutMS), SocketException);
-        auto endTime = std::chrono::system_clock::now();
+        auto endTime = std::chrono::steady_clock::now();
         auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
         BOOST_CHECK_GE(runTimeMS, timeoutMS);
     }
@@ -65,9 +65,9 @@ BOOST_AUTO_TEST_CASE(Test_SocketClient_Reconnect_Error)
         const char* testData = "SocketClient test data";
         int ntimes = 4;
         for (int i = 0; i < ntimes; i++) {
-            auto startTime = std::chrono::system_clock::now();
+            auto startTime = std::chrono::steady_clock::now();
             BOOST_CHECK_THROW(client.Send(testData), SocketException);
-            auto endTime = std::chrono::system_clock::now();
+            auto endTime = std::chrono::steady_clock::now();
             auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
 
             BOOST_CHECK_MESSAGE((runTimeMS >= timeoutMS),
@@ -117,7 +117,7 @@ SendDataToServer(
         delete [] buf;
 
         bool mockServerDone = mockServer->WaitForTestsDone(maxRunTimeMS);
-        BOOST_CHECK_EQUAL(true, mockServerDone);
+        BOOST_CHECK(mockServerDone);
 
         client.Stop();
         client.Close();
@@ -199,7 +199,7 @@ TestSendRetry()
     client.Send(TestUtil::EndOfTest().c_str());
 
     bool mockServerDone = mockServer->WaitForTestsDone(100);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     client.Stop();
     client.Close();
@@ -242,29 +242,37 @@ DoSend(
 }
 
 // Run Read() loop.
+// When min number of bytes is read, signal minReadCV.
 // Break the loop when either SocketClient is stopped, or
 // Read() throws SocketException.
 static void
 DoRead(
     const std::shared_ptr<SocketClient>& sockClient,
-    size_t & totalRead,
+    size_t minReadBytes,
     const std::shared_ptr<CounterCV>& cv,
+    const std::shared_ptr<CounterCV>& minReadCV,
     std::promise<void>& thReady
     )
 {
     CounterCVWrap cvwrap(cv);
     thReady.set_value();
+    size_t totalRead = 0;
 
     while(true) {
         try {
             char buf[1024];
             auto rtn = sockClient->Read(buf, sizeof(buf));
             if (-1 == rtn) {
+                BOOST_TEST_MESSAGE("SocketClient::Read() returned -1. Abort CV=" << cvwrap.GetId());
                 break;
             }
             totalRead += rtn;
+            if (totalRead >= minReadBytes) {
+                minReadCV->notify_all();
+            }
         }
         catch(const SocketException& ex) {
+            BOOST_TEST_MESSAGE("SocketClient::Read() exception: " << ex.what() << ". Abort CV=" << cvwrap.GetId());
             break;
         }
     }
@@ -295,6 +303,9 @@ MultiSenderReaderTest(
     auto sendersCV = std::make_shared<CounterCV>(nSenders);
     auto readersCV = std::make_shared<CounterCV>(nReaders);
 
+    // Make sure each reader reads at least N bytes before signaling CV
+    auto minReadCV = std::make_shared<CounterCV>(nReaders);
+
     // use std::promise to make sure all threads are ready before
     // master thread moves ahead
     std::vector<std::promise<void>> thReadyList;
@@ -312,10 +323,11 @@ MultiSenderReaderTest(
         senderList.push_back(std::move(senderT));
     }
 
-    size_t totalClientRead = 0;
+    // Each ack msg sent from server to client should have at least 4 bytes
+    auto minReadBytes = 4 * nmsgs;
     for (int i = 0; i < nReaders; i++) {
         auto readerT = std::async(std::launch::async, DoRead, sockClient,
-            std::ref(totalClientRead), readersCV, std::ref(thReadyList[i+nSenders]));
+            minReadBytes, readersCV, minReadCV, std::ref(thReadyList[i+nSenders]));
         readerList.push_back(std::move(readerT));
     }
 
@@ -337,6 +349,10 @@ MultiSenderReaderTest(
     BOOST_CHECK_MESSAGE(mockServer->WaitForTestsDone(msTimeoutMS),
         "Wait for mockServer tests to finish timed out (" << msTimeoutMS << " ms)");
 
+    // wait for each reader to read at least minReadBytes bytes before calling Stop().
+    BOOST_CHECK_MESSAGE(minReadCV->wait_for(msTimeoutMS),
+        "Wait for minReadBytes timed out (" << msTimeoutMS << " ms)");
+
     sockClient->Stop();
     mockServer->Stop();
 
@@ -354,16 +370,10 @@ MultiSenderReaderTest(
 
     // validate results
 
-    // mininum data sent (actual data has extra info added to form valid DJSON msg)
+    // minimum data sent (actual data has extra info added to form valid DJSON msg)
     auto minClientSend = (testSource.size() + testData.size()) * nSenders * nmsgs;
-
-    // Each ack msg sent from server to client should have at least 4 bytes
-    auto minServerSend = 4 * nSenders * nmsgs;
-
     auto actualServerRecv = mockServer->GetTotalBytesRead();
-
     BOOST_CHECK_GT(actualServerRecv, minClientSend);
-    BOOST_CHECK_GE(totalClientRead, minServerSend);
 }
 
 BOOST_AUTO_TEST_CASE(Test_SocketClient_1_Sender_Reader_1_msg)

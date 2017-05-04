@@ -28,7 +28,12 @@ namespace TestUtil
 
     // wait for a task for a max amount of time. then check its status
     // Return true if finished within timeoutMS, false if otherwise.
-    bool WaitForTask(std::future<void>& task, uint32_t timeoutMS);
+    template <typename T>
+    bool WaitForTask(std::future<T>& task, uint32_t timeoutMS)
+    {
+        auto status = task.wait_for(std::chrono::milliseconds(timeoutMS));
+        return (std::future_status::ready == status);
+    }
 
     // Get the size of a given file
     // Throw exception if filename is empty string, or failed to open file.

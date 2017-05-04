@@ -1,5 +1,7 @@
 # To force using memcpy@GLIBC_2.2.5 (for old Linux distro versions)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--wrap=memcpy")
+# To avoid GLIBCXX_3.4.(high) version issue, statically link to libstdc++ & libgcc
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/outmdsd
@@ -27,6 +29,9 @@ SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES PREFIX "Lib")
 
 target_link_libraries(${LIB_NAME}
     outmdsd
+    # Required not to use clock_gettime@GLIBC_2.17
+    -Wl,--no-as-needed
+    rt
 )
 
 install(TARGETS ${LIB_NAME}

@@ -6,22 +6,29 @@
 - Boost unit test version 1.55 (libboost-test)
   NOTE: other version of libboost-test may not work.
 - GCC version >= 4.8.4
-- Ruby 2.2.0 with [OMS Linux Agent](https://github.com/Microsoft/OMS-Agent-for-Linux)
+- Ruby 2.x with [OMS Linux Agent](https://github.com/Microsoft/OMS-Agent-for-Linux)
+  or [Fluentd Agent](http://www.fluentd.org/download)
 - [SWIG](http://www.swig.org/) 3.0
 
 ## How to build the code
+
 Run:
-```
-$ buildall.sh [options]
+
+```bash
+cd src
+./buildall.sh [options]
 ```
 
 ## How to run full tests
-```
-$ cd builddir/release/tests
-$ ./runtests.sh
-```
-Check logs in *.log if any error.
 
+Build the code following "How to build the code" section.
+
+```bash
+cd src/builddir/release/tests
+./runtests.sh [options]
+```
+
+Check logs in *.log if any error.
 
 ## Overview of mdsd plugin design and code structure
 
@@ -39,9 +46,9 @@ The plugin will send dynamic schema data in JSON format (called DJSON) to mdsd u
 
 The data flow path is:
 
-1) Fluentd takes input and/or filter plugin data to mdsd output plugin. The data are in JSON format.
+1. Fluentd takes input and/or filter plugin data to mdsd output plugin. The data are in JSON format.
 
-2) Mdsd output plugin processes each of the data record.
+1. Mdsd output plugin processes each of the data record.
 
    a) Find or create schema.
       It uses a global hash to hold all existing schemas. When a new record arrives, its schema is searched in the global hash. If found, it will be used. If not found, it will be created and stored in the hash.
@@ -57,18 +64,18 @@ The data flow path is:
 
 Mdsd plugin uses multiple threads to send data to mdsd process using UNIX domain socket. The #2/#3 threads are created in liboutmdsd.a.
 
-1) Main thread.
+1. Main thread.
 
    This is the plugin ruby code. The ruby code will call some send API to send a data string. If the send succeeds, the ruby code will return. If the send fails, a runtime error is raised. Fluentd will handle this error and retry later based on [buffered plugin design](http://docs.fluentd.org/articles/buffer-plugin-overview).
 
    What happens is when the ruby send API succeeds, the data record will be saved into a global concurrent cache. The cache is used for future retry.
 
-2) Reader thread.
+1. Reader thread.
 
    This thread reads mdsd acknowledge response data. When mdsd receives data from socket client, it always returns some TAG information back to socket client. This TAG information can tell which message is received and what happened to the message.
 
    If plugin parameter acktimeoutms has a value greater than 0, when a TAG is received from mdsd agent, the corresponding data record will be removed from the global concurrent cache.
 
-3) Resender thread.
+1. Resender thread.
 
    If plugin parameter acktimeoutms has a value greater than 0, the plugin will periodically resend the data in the global concurrent cache to mdsd agent.

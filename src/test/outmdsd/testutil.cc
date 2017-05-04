@@ -80,16 +80,6 @@ TestUtil::GetErrnoStr(int errnum)
     return std::string(errRC);
 }
 
-bool
-TestUtil::WaitForTask(
-    std::future<void>& task,
-    uint32_t timeoutMS
-    )
-{
-    auto status = task.wait_for(std::chrono::milliseconds(timeoutMS));
-    return (std::future_status::ready == status);
-}
-
 size_t
 TestUtil::GetFileSize(
     const std::string & filename

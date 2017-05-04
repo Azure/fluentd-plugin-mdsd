@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(Test_SocketLogger_Error)
 
         for (int i = 0; i < 5; i++) {
             bool sendOK = eplog.SendDjson("testSource", "testSchemaAndData-" + std::to_string(i+1));
-            BOOST_CHECK_EQUAL(false, sendOK);
+            BOOST_CHECK(!sendOK);
         }
     }
     catch(const std::exception & ex) {
@@ -111,7 +111,7 @@ ValidateServerResults(
 // This is to test that the logger can send and receive data reliably.
 // If the socket server has failures, data should be resent properly.
 //
-// sendDelayMS: milli-seconds to delay between each Send().
+// sendDelayMS: milliseconds to delay between each Send().
 // mockServerRestart: if true, restart MockServer in the middle to simulate mdsd failures.
 static size_t
 SendDataToServer(
@@ -168,7 +168,7 @@ SendDataToServer(
     totalSend += SendEndOfTestToServer(eplog);
 
     bool mockServerDone = mockServer->WaitForTestsDone(testRuntimeMS);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     mockServer->Stop();
 
@@ -182,7 +182,7 @@ SendDataToServer(
 }
 
 // Send messages to MockServer from SocketLogger.
-// sendDelayMS: milli-seconds to delay between each Send().
+// sendDelayMS: milliseconds to delay between each Send().
 // mockServerRestart: if true, restart MockServer in the middle to simulate mdsd failures.
 // validate: E2E works
 static void

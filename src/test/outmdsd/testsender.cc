@@ -13,18 +13,17 @@ using namespace EndpointLog;
 
 BOOST_AUTO_TEST_SUITE(testsender)
 
-// Return runtime in milli-seconds on how long DataSender::Run() is run
-static uint32_t
+static void
 RunSender(
     std::promise<void>& threadReady,
-    DataSender& sender
+    DataSender& sender,
+    bool& stopSender
     )
 {
     threadReady.set_value();
-    auto startTime = std::chrono::system_clock::now();
     sender.Run();
-    auto endTime = std::chrono::system_clock::now();
-    return static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
+    // When sender Run() is done, the stopSender must be set to be true.
+    BOOST_CHECK(stopSender);
 }
 
 static void
@@ -65,6 +64,7 @@ RunAPITest(
 {
     try {
         std::promise<void> threadReady;
+        bool stopSender = false;
 
         const std::string socketfile = "/tmp/nosuchfile";
         auto sockClient = std::make_shared<SocketClient>(socketfile, 1);
@@ -79,11 +79,12 @@ RunAPITest(
         AddItemsToQueue(q, nitems, 10, 0);
 
         DataSender sender(sockClient, cache, q);
-        auto senderTask = std::async(std::launch::async, RunSender, std::ref(threadReady), std::ref(sender));
+        auto senderTask = std::async(std::launch::async, RunSender, std::ref(threadReady), std::ref(sender),
+            std::ref(stopSender));
 
-        const uint32_t runTimeMS = 10;
         threadReady.get_future().wait();
-        usleep(runTimeMS*1000);
+        usleep(10*1000);
+        stopSender = true;
         sender.Stop();
         q->stop_once_empty();
 
@@ -91,9 +92,10 @@ RunAPITest(
         BOOST_CHECK_EQUAL(0, q->size());
         BOOST_CHECK_EQUAL(0, sender.GetNumSuccess());
 
-        // validate that Run() continues until it is told to stop
-        auto actualRunTime = senderTask.get();
-        BOOST_CHECK_GE(actualRunTime, runTimeMS);
+        // Validate that once DataSender::Stop() is called, it shouldn't take
+        // more than N milliseconds for DataSender::Run() thread to break.
+        // There is no exact value for N. The test uses some reasonable small number.
+        BOOST_CHECK(TestUtil::WaitForTask(senderTask, 5));
 
         if (cache) {
             BOOST_CHECK_EQUAL(nitems, cache->Size());
@@ -142,11 +144,15 @@ RunE2ETest(size_t nitems, size_t nbytesPerItem)
     nitems++; // end of test message
 
     bool mockServerDone = mockServer->WaitForTestsDone(1000);
-    BOOST_CHECK_EQUAL(true, mockServerDone);
+    BOOST_CHECK(mockServerDone);
 
     mockServer->Stop();
     sender.Stop();
     incomingQueue->stop_once_empty();
+    // Wait until sender task is finished or timed out.
+    // Without this, senderTask could be in the middle of sending, such that the sender
+    // counters (e.g. GetNumSend(), GetNumSuccess(), etc) can be invalid.
+    BOOST_CHECK(TestUtil::WaitForTask(senderTask, 500));
 
     BOOST_CHECK_EQUAL(nitems, sender.GetNumSend());
     BOOST_CHECK_EQUAL(0, incomingQueue->size());

@@ -4,6 +4,7 @@
 #include "DjsonLogItem.h"
 #include "EtwLogItem.h"
 #include "IdMgr.h"
+#include "testutil.h"
 
 using namespace EndpointLog;
 
@@ -39,9 +40,14 @@ BOOST_AUTO_TEST_CASE(Test_LogItem_CacheTime)
         DjsonLogItem item(source, schemaAndData);
         item.Touch();
         int nexpectedMS = 20;
-        usleep(nexpectedMS*1000);
-        auto actualMS = item.GetLastTouchMilliSeconds();
-        BOOST_CHECK_LE(abs(actualMS - nexpectedMS), 1);
+
+        // Only compare the time when usleep() succeeds.
+        if (0 == usleep(nexpectedMS*1000)) {
+            auto actualMS = item.GetLastTouchMilliSeconds();
+            // sleep given time is never accurate. So allow some buffer.
+            BOOST_CHECK_MESSAGE(abs(actualMS - nexpectedMS) <= 3,
+                "actualMS=" << actualMS << "; nexpectedMS=" << nexpectedMS);
+        }
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());
@@ -62,8 +68,8 @@ BOOST_AUTO_TEST_CASE(Test_IdMgr_BVT)
         IdMgr::value_type_t value = std::make_pair(123, testValue);
         auto valueCopy = value;
 
-        BOOST_CHECK_EQUAL(false, m.GetItem(key, value));
-        BOOST_CHECK_EQUAL(true, valueCopy == value);
+        BOOST_CHECK(!m.GetItem(key, value));
+        BOOST_CHECK(valueCopy == value);
 
         // SaveItem won't create new id if key already exists
         for (int i = 0; i < 3; i++) {
@@ -72,7 +78,7 @@ BOOST_AUTO_TEST_CASE(Test_IdMgr_BVT)
         }
 
         IdMgr::value_type_t newValue;
-        BOOST_CHECK_EQUAL(true, m.GetItem(key, newValue));
+        BOOST_CHECK(m.GetItem(key, newValue));
         BOOST_CHECK_EQUAL(1, newValue.first);
         BOOST_CHECK_EQUAL(testValue, newValue.second);
 
@@ -80,8 +86,8 @@ BOOST_AUTO_TEST_CASE(Test_IdMgr_BVT)
         m.Insert(key2, newValue);
 
         IdMgr::value_type_t setValue;
-        BOOST_CHECK_EQUAL(true, m.GetItem(key2, setValue));
-        BOOST_CHECK_EQUAL(true, setValue == newValue);
+        BOOST_CHECK(m.GetItem(key2, setValue));
+        BOOST_CHECK(setValue == newValue);
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test failed with unexpected exception: " << ex.what());

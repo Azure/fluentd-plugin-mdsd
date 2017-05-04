@@ -181,7 +181,7 @@ MultiAddEraseTest(
     // start all threads
     masterPromise.set_value();
 
-    BOOST_CHECK_EQUAL(true, taskCV->wait_for(400));
+    BOOST_CHECK(taskCV->wait_for(400));
 }
 
 

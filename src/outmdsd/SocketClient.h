@@ -8,10 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <random>
-
-extern "C" {
-#include <sys/time.h>
-}
+#include <chrono>
 
 namespace EndpointLog {
 
@@ -33,7 +30,7 @@ public:
     /// Construct a new object using Unix domain socket file.
     /// </summary>
     /// <param name="socketfile">unix domain socket file</param>
-    /// <param name="connRetryTimeoutMS">number of milli-seconds to timeout socket
+    /// <param name="connRetryTimeoutMS">number of milliseconds to timeout socket
     /// connect() retry </param>
     SocketClient(const std::string & socketfile, unsigned int connRetryTimeoutMS=60*1000);
 
@@ -41,7 +38,7 @@ public:
     /// Construct a new object using TCP/IP port.
     /// </summary>
     /// <param name="port">port number</param>
-    /// <param name="connRetryTimeoutMS">number of milli-seconds to timeout socket
+    /// <param name="connRetryTimeoutMS">number of milliseconds to timeout socket
     /// connect() retry </param>
     SocketClient(int port, unsigned int connRetryTimeoutMS=60*1000);
 
@@ -77,7 +74,7 @@ public:
     /// <param name='buf'>buffer where data will be saved. The caller must make sure 
     /// that 'buf' is valid and  it has at least bufsize space. </param>
     /// <param name='count'>max number of bytes to read</param>
-    /// <param name='timeoutMS'>milli-seconds to wait before timeout if socket fd
+    /// <param name='timeoutMS'>milliseconds to wait before timeout if socket fd
     /// is invalid.</param>
     ssize_t Read(void* buf, size_t count, int timeoutMS = 60*1000);
 
@@ -109,14 +106,14 @@ private:
 
     /// Return true if the time from 'startTime' to 'now' is bigger or equal to
     /// m_connRetryTimeoutMS. Return false otherwise.
-    bool IsRetryTimeout(const struct timeval & startTime) const;
+    bool IsRetryTimeout(const std::chrono::steady_clock::time_point & startTime) const;
 
     /// Wait some time using exponential delay policy before next connect() retry.
-    /// <param name="maxWaitMS"> max milli-seconds to wait</param>
+    /// <param name="maxWaitMS"> max milliseconds to wait</param>
     void WaitBeforeReConnect(int maxWaitMS);
 
     /// Wait until socket fd is a valid number, or until timed out.
-    /// <param name="timeoutMS"> max milli-seconds to wait</param>
+    /// <param name="timeoutMS"> max milliseconds to wait</param>
     void WaitForSocketToBeReady(int timeoutMS);
 
     /// send data to the socket server.
@@ -136,13 +133,11 @@ private:
 private:
     constexpr static int INVALID_SOCKET = -1;
     std::shared_ptr<SockAddr> m_sockaddr;
-    unsigned int m_connRetryTimeoutMS = 0;  // milli-seconds to timeout connect() retry.
+    unsigned int m_connRetryTimeoutMS = 0;  // milliseconds to timeout connect() retry.
 
     std::atomic<int> m_sockfd{INVALID_SOCKET};
     std::mutex m_fdMutex;  // protect sockfd at socket creation/close time.
     std::mutex m_sendMutex; // avoid interleaved message in multi Send() at the same time.
-
-    struct timeval m_lastConnTime; // last time to create a new socket. used for delay policy.
 
     // SocketClient has several APIs that'll block for certain things to be ready. For example,
     // poll() for I/O, and Read() for valid socket fd, m_stopClient is used

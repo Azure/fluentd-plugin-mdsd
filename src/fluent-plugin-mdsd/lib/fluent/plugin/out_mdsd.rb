@@ -13,12 +13,21 @@ module Fluent
 
             @mdsdMsgMaker = nil
             @mdsdLogger = nil
+            @mdsdTagPrefix = nil
         end
 
         desc 'full path to mdsd djson socket file'
         config_param :djsonsocket, :string
-        desc 'if no ack is received from mdsd after N milli-seconds, drop msg.'
+        desc 'if no ack is received from mdsd after N milliseconds, drop msg.'
         config_param :acktimeoutms, :integer
+        desc 'Fluentd tag regex patterns whose match (if any) will be used as mdsd source name'
+        config_param :mdsd_tag_regex_patterns, :array, :default => []
+        desc 'message resend interval in milliseconds'
+        config_param :resend_interval_ms, :integer, :default => 30000
+        desc 'timeout in millisecond when connecting to djsonsocket'
+        config_param :conn_retry_timeout_ms, :integer, :default => 60000
+        desc 'the field name for the event emit time stamp'
+        config_param :emit_timestamp_name, :string, :default => "FluentdIngestTimestamp"
 
         # This method is called before starting.
         def configure(conf)
@@ -28,7 +37,9 @@ module Fluent
             Liboutmdsdrb::SetLogLevel(log_level)
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
-            @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms, 30000, 60000)
+            @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms,
+                resend_interval_ms, conn_retry_timeout_ms)
+            @mdsdTagPatterns = mdsd_tag_regex_patterns
         end
 
         # This method is called before starting.
@@ -40,12 +51,13 @@ module Fluent
         def shutdown()
             super
         end
-        
+
         # This method is called when an event reaches to Fluentd.
+        # time: this is an integer, Unix time_t. Number of seconds since 1/1/1970 UTC.
         # NOTE: a plugin must define this because base class doesn't have
         # default implementation.
         def format(tag, time, record)
-            [tag, record].to_msgpack
+            [tag, time, record].to_msgpack
         end
 
         # This method is called every flush interval.
@@ -53,18 +65,26 @@ module Fluent
         # NOTE! This method is called by internal thread, not Fluentd's main thread.
         # So IO wait doesn't affect other plugins.
         def write(chunk)
-          chunk.msgpack_each {|(tag, record)|
-            handle_record(tag, record)
-          }
-          @log.flush
+            chunk.msgpack_each {|(tag, time, record)|
+                # Ruby (version >= 1.9) hash preserves insertion order. So the following item is
+                # the last item when iterating the 'record' hash.
+                record[emit_timestamp_name] = Time.at(time)
+                handle_record(tag, record)
+            }
+            @log.flush
         end
 
+private
+        # Handle a regular record, which is hash of key, value pairs.
+        # NOTE: not all types are supported. The supported data types are
+        # defined in SchemaManager class.
         def handle_record(tag, record)
+            mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPatterns)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
-            if not @mdsdLogger.SendDjson(tag, dataStr)
-                raise "Sending data (tag=#{tag} to mdsd failed"
+            if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
+                raise "Sending data (tag=#{tag}) to mdsd failed"
             end
-            @log.trace "tag='#{tag}', data='#{dataStr}'"
+            @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
         end
 
     end # class OutputMdsd
@@ -83,7 +103,7 @@ class SchemaManager
 
         # key: Ruby object type
         # value: mdsd schema type
-        # NOTE: only supported types are listed here. Other types are not supported.
+        # NOTE: for other data types that are not included here, they'll be treated as string.
         @@rb2mdsdType = 
         {
             "TrueClass" => "FT_BOOL",
@@ -132,16 +152,17 @@ class SchemaManager
     def get_new_schema(record)
         schema_str = ""
 
+        # the last element is the precise time stamp field
+        time_field_index = record.size() - 1
         record.each { |key, value|
             rb_typestr = value.class.name
             mdsd_typestr = @@rb2mdsdType[rb_typestr]
             if !mdsd_typestr
-                @logger.error "Error: unsupported Ruby type #{rb_typestr}.\n"
-                return nil
+                mdsd_typestr = "FT_STRING"
             end
 
             if (schema_str == "")
-                schema_str << "["
+                schema_str << "[" << time_field_index.to_s << ","
             else
                 schema_str << ","
             end
@@ -169,16 +190,32 @@ class MdsdMsgMaker
     # Input: ruby tag and ruby record
     # Output: a string for mdsd djson including schema info and actual data.
     # Example output:
-    # 3,[["timestamp","FT_TIME"],["message","FT_STRING"]],[[1477777,542323],"This is syslog msg"]]
+    # 3,[1,["message","FT_STRING"],["EmitTimestamp","FT_TIME"]],["This is syslog msg",[1493671442,0]]]
     #
     def get_schema_value_str(record)
         resultStr = ""
-
         schema_obj = @schema_mgr.get_schema_info(record)
         resultStr << schema_obj[0].to_s << "," << schema_obj[1] << ","
         resultStr << get_record_values(record)
 
         return resultStr
+    end
+
+    # If configured, convert (unify) fluentd tags to a unified tag (regex match) so that mdsd
+    # sees only one single tag (unique source name) for all the matched fluentd tags. Basic
+    # syslog use case is OK with a prefix match (e.g., mdsd.syslog.** to mdsd.syslog), but
+    # extended syslog use case needs a pattern matching (e.g., mdsd.syslog.user.info to
+    # mdsd.syslog.user, mdsd.syslog.local1.err to mdsd.syslog.local1 : This can be
+    # expressed as regex "^mdsd\.syslog\.\w+" and the match will be returned as the
+    # corresponding mdsd source name.
+    def create_mdsd_source(tag, regex_list)
+        regex_list.each { |regex|
+            match = tag.match /#{regex}/
+            if match
+                return match[0]
+            end
+        }
+        return tag
     end
 
     private
@@ -199,9 +236,15 @@ class MdsdMsgMaker
         return resultStr
     end
 
+
+    # Get formatted value string accepted by mdsd dynamic json protocol.
     def get_value_by_type(value)
         if (value.kind_of? String)
-            return ('"' + value + '"')
+            # Use 'dump' to do proper escape.
+            return value.dump
+        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)
+            # Treat data structure as a string. Use 'dump' to do proper escape.
+            return value.to_s.dump
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
         else

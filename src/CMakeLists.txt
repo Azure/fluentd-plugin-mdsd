@@ -41,8 +41,6 @@ set(LINKER_FLAGS "-Wl,-z,relro -Wl,-z,now")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
-set(RUBY_INC_PATH /opt/microsoft/omsagent/ruby/include/ruby-2.2.0)
-
 option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
 
 add_subdirectory(outmdsd)

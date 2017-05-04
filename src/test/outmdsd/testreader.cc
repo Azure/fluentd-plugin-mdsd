@@ -18,16 +18,13 @@ void
 StartSocketReader(
     std::promise<void>& threadReady,
     const std::shared_ptr<DataReader>& sr,
-    uint32_t minRunTimeMS
+    bool& stopRunLoop
     )
 {
     threadReady.set_value();
-
-    auto startTime = std::chrono::system_clock::now();
     sr->Run();
-    auto endTime = std::chrono::system_clock::now();
-    auto runTimeMS = static_cast<uint32_t>((endTime-startTime)/std::chrono::milliseconds(1));
-    BOOST_CHECK_GE(runTimeMS, minRunTimeMS);
+    // Test that when Run() is done, stopRunLoop must be set to be true.
+    BOOST_CHECK(stopRunLoop);
 }
 
 // This test will do
@@ -69,7 +66,7 @@ SendDataToServer(int nmsgs)
         totalSend += TestUtil::EndOfTest().size();
 
         bool mockServerDone = mockServer->WaitForTestsDone(500);
-        BOOST_CHECK_EQUAL(true, mockServerDone);
+        BOOST_CHECK(mockServerDone);
 
         sockClient->Stop();
         sockClient->Close();
@@ -98,21 +95,27 @@ BOOST_AUTO_TEST_CASE(Test_SocketReader_Error)
         auto sockClient = std::make_shared<SocketClient>(socketfile, 1);
         auto dataCache = std::make_shared<ConcurrentMap<LogItemPtr>>();
 
-        const uint32_t minRunTimeMS = 100;
         std::promise<void> threadReady;
+        bool stopRunLoop = false;
 
         auto sockReader = std::make_shared<DataReader>(sockClient, dataCache);
         auto readerTask = std::async(std::launch::async, StartSocketReader,
-            std::ref(threadReady),sockReader, minRunTimeMS);
+            std::ref(threadReady),sockReader, std::ref(stopRunLoop));
 
         // wait until StartSocketReader thread starts
         threadReady.get_future().wait();
 
-        usleep(minRunTimeMS*1000);
+        usleep(100*1000);
 
         sockClient->Stop();
+        // sockReader->Stop() should break sockReader's Run() loop.
+        stopRunLoop = true;
         sockReader->Stop();
-        readerTask.get();
+
+        // Validate that once DataReader::Stop() is called, it shouldn't take
+        // more than N milliseconds for DataReader::Run() thread to break.
+        // There is no exact value for N. The test uses some reasonable small number.
+        BOOST_CHECK(TestUtil::WaitForTask(readerTask, 5));
     }
     catch(const std::exception & ex) {
         BOOST_FAIL("Test exception " << ex.what());
