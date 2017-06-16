@@ -221,7 +221,7 @@ DataReader::ProcessTag(
 
     if ("0" != ackStatus) {
         auto statusStr = GetAckStatusStr(ackStatus);
-        Log(TraceLevel::Error, "unexpected mdsd ack status: " << statusStr);
+        Log(TraceLevel::Error, "unexpected mdsd ack status: " << statusStr << ", tag '" << tag << "'" );
     }
     else {
         // Only remove item from cache if ack status is 0 (Success)
