@@ -8,10 +8,18 @@ The mdsd output plugin is a [buffered fluentd plugin](http://docs.fluentd.org/ar
 
 ### Installation
 
-The plugin should be installed using gem:
+NOTE: The plugin gem must be installed using **fluent-gem**.
 
-    Download the gemfile to your computer.
-    $ sudo /PATH/TO/fluent-gem install <gemfile>
+Download the [gemfile](https://github.com/Azure/fluentd-plugin-mdsd/releases) to your computer. Assume it is saved to /path/to/gemfile.
+
+For td-agent, run
+
+    $sudo /opt/td-agent/embedded/bin/fluent-gem install /path/to/gemfile
+
+For oms-agent, run
+
+    $sudo /opt/microsoft/omsagent/ruby/bin/fluent-gem install /path/to/gemfile
+
 
 ### Expected Data Formats
 
@@ -37,7 +45,7 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
 - **conn_retry_timeout_ms**: the timeout in milliseconds to do network connection retry when connecting to mdsd process failed. Default: 60,000.
 
-- **emit_timestamp_name**: the field name for the event emit time stamp. Default: "EmitTimestamp".
+- **emit_timestamp_name**: the field name for the event emit time stamp. Default: "FluentdIngestTimestamp".
 
 ### Usage
 
