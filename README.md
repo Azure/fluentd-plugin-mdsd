@@ -14,11 +14,15 @@ Download the [gemfile](https://github.com/Azure/fluentd-plugin-mdsd/releases) to
 
 For td-agent, run
 
-    $sudo /opt/td-agent/embedded/bin/fluent-gem install /path/to/gemfile
+    $sudo bash
+    $umask 22
+    $/opt/td-agent/embedded/bin/fluent-gem install /path/to/gemfile
 
 For oms-agent, run
 
-    $sudo /opt/microsoft/omsagent/ruby/bin/fluent-gem install /path/to/gemfile
+    $sudo bash
+    $umask 22
+    $/opt/microsoft/omsagent/ruby/bin/fluent-gem install /path/to/gemfile
 
 
 ### Expected Data Formats
