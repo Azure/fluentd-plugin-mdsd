@@ -28,6 +28,8 @@ module Fluent
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
         desc 'the field name for the event emit time stamp'
         config_param :emit_timestamp_name, :string, :default => "FluentdIngestTimestamp"
+        desc 'the maximum record size to emit'
+        config_param :max_record_size, :integer, :default => 128 * 1024-1
 
         # This method is called before starting.
         def configure(conf)
@@ -81,12 +83,21 @@ private
         def handle_record(tag, record)
             mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPatterns)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
+            return if record_too_large?(dataStr)
             if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
                 raise "Sending data (tag=#{tag}) to mdsd failed"
             end
             @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
         end
 
+        def record_too_large?(dataStr)
+            if dataStr.length > max_record_size
+                @log.warn "Dropping too large record to mdsd with size=#{dataStr.length}"
+                true
+            else
+                false
+            end
+        end
     end # class OutputMdsd
 end # module Fluent
 
@@ -95,7 +106,7 @@ class SchemaManager
     def initialize(logger)
         @logger = logger
 
-        # schemahash contains all known schemas. 
+        # schemahash contains all known schemas.
         # key: a string-join of the (json-key, value-type-name) pairs
         # value: a two-element array: [SchemaId, SchemaString]
         # NOTE: SchemaId must be unique in the hash
@@ -104,7 +115,7 @@ class SchemaManager
         # key: Ruby object type
         # value: mdsd schema type
         # NOTE: for other data types that are not included here, they'll be treated as string.
-        @@rb2mdsdType = 
+        @@rb2mdsdType =
         {
             "TrueClass" => "FT_BOOL",
             "FalseClass" => "FT_BOOL",
