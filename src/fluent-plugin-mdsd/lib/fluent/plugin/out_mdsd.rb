@@ -7,8 +7,6 @@ module Fluent
     class OutputMdsd < BufferedOutput
         Plugin.register_output('mdsd', self)
 
-        MDSD_MAX_RECORD_SIZE = 128 * 1024-1
-
         def initialize()
             super
             require_relative 'Liboutmdsdrb'
@@ -30,8 +28,6 @@ module Fluent
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
         desc 'the field name for the event emit time stamp'
         config_param :emit_timestamp_name, :string, :default => "FluentdIngestTimestamp"
-        desc "the maximum record size to emit. Cannot exceed #{MDSD_MAX_RECORD_SIZE}"
-        config_param :max_record_size, :integer, :default => MDSD_MAX_RECORD_SIZE
 
         # This method is called before starting.
         def configure(conf)
@@ -44,7 +40,6 @@ module Fluent
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms,
                 resend_interval_ms, conn_retry_timeout_ms)
             @mdsdTagPatterns = mdsd_tag_regex_patterns
-            @configured_max_record_size = [max_record_size, MDSD_MAX_RECORD_SIZE].min
         end
 
         # This method is called before starting.
@@ -83,23 +78,13 @@ private
         # Handle a regular record, which is hash of key, value pairs.
         # NOTE: not all types are supported. The supported data types are
         # defined in SchemaManager class.
-        def handle_record(tag, record, mdsdSource)
+        def handle_record(tag, record)
             mdsdSource = @mdsdMsgMaker.create_mdsd_source(tag, @mdsdTagPatterns)
             dataStr = @mdsdMsgMaker.get_schema_value_str(record)
-            return if record_too_large?(dataStr, mdsdSource)
             if not @mdsdLogger.SendDjson(mdsdSource, dataStr)
                 raise "Sending data (tag=#{tag}) to mdsd failed"
             end
             @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
-        end
-
-        def record_too_large?(dataStr, mdsdSource)
-            if dataStr.length > @configured_max_record_size
-                @log.warn "Dropping too large record to mdsd with size=#{dataStr.length}, source='#{mdsdSource}"
-                true
-            else
-                false
-            end
         end
     end # class OutputMdsd
 end # module Fluent
@@ -261,6 +246,8 @@ class MdsdMsgMaker
             return value.to_s.dump
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
+        elsif value.nil?
+            return "null"
         else
             return value.to_s
         end
