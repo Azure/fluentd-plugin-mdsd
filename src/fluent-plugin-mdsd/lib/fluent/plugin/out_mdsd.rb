@@ -86,7 +86,6 @@ private
             end
             @log.trace "source='#{mdsdSource}', data='#{dataStr}'"
         end
-
     end # class OutputMdsd
 end # module Fluent
 
@@ -95,7 +94,7 @@ class SchemaManager
     def initialize(logger)
         @logger = logger
 
-        # schemahash contains all known schemas. 
+        # schemahash contains all known schemas.
         # key: a string-join of the (json-key, value-type-name) pairs
         # value: a two-element array: [SchemaId, SchemaString]
         # NOTE: SchemaId must be unique in the hash
@@ -104,7 +103,7 @@ class SchemaManager
         # key: Ruby object type
         # value: mdsd schema type
         # NOTE: for other data types that are not included here, they'll be treated as string.
-        @@rb2mdsdType = 
+        @@rb2mdsdType =
         {
             "TrueClass" => "FT_BOOL",
             "FalseClass" => "FT_BOOL",
@@ -247,6 +246,8 @@ class MdsdMsgMaker
             return value.to_s.dump
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
+        elsif value.nil?
+            return "null"
         else
             return value.to_s
         end
