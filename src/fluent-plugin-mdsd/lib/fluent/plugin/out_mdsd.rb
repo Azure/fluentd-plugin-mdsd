@@ -232,8 +232,6 @@ class MdsdMsgMaker
         return tag
     end
 
-    private
-
     def get_record_values(record)
         resultStr = ""
 
@@ -261,6 +259,8 @@ class MdsdMsgMaker
             return value.to_s.dump
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
+        elsif value.nil?
+            return "null"
         else
             return value.to_s
         end
