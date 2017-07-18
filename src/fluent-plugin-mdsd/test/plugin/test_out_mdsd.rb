@@ -233,4 +233,20 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
             assert_equal(tag, actual_source_name, "Invalid source name returned")
         }
     end
+
+    def test_get_value_by_type()
+        test_data = {
+            "stringdata" => "\"stringdata\"",
+            [1, 2] => "\"[1, 2]\"",
+            Time.at(100) => "[100,0]",
+            nil => "null",
+            123 => "123"
+        }
+
+        test_data.each { |input, expected_output|
+            actual_output = @msg_maker.get_value_by_type(input)
+            assert_equal(expected_output, actual_output, "get_value_by_type")
+        }
+    end
+
 end
