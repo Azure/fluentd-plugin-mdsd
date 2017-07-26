@@ -5,6 +5,7 @@
 - CMake version >= 2.8.12
 - Boost unit test version 1.55 (libboost-test)
   NOTE: other version of libboost-test may not work.
+- Boost system library version 1.55 (libboost-system)
 - GCC version >= 4.8.4
 - Ruby 2.x with [OMS Linux Agent](https://github.com/Microsoft/OMS-Agent-for-Linux)
   or [Fluentd Agent](http://www.fluentd.org/download)
