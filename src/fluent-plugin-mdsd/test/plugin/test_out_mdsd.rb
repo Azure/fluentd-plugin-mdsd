@@ -239,7 +239,7 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
             "stringdata" => "\"stringdata\"",
             [1, 2] => "\"[1, 2]\"",
             Time.at(100) => "[100,0]",
-            nil => "null",
+            nil => "\"null\"",
             123 => "123"
         }
 

@@ -260,7 +260,7 @@ class MdsdMsgMaker
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
         elsif value.nil?
-            return "null"
+            return "null".dump
         else
             return value.to_s
         end
