@@ -30,6 +30,8 @@ module Fluent
         config_param :conn_retry_timeout_ms, :integer, :default => 60000
         desc 'the field name for the event emit time stamp'
         config_param :emit_timestamp_name, :string, :default => "FluentdIngestTimestamp"
+        desc "the timestamp to use for records sent to mdsd"
+        config_param :use_source_timestamp, :bool, :default => true
         desc "the maximum record size to emit. Cannot exceed #{MDSD_MAX_RECORD_SIZE}"
         config_param :max_record_size, :integer, :default => MDSD_MAX_RECORD_SIZE
 
@@ -62,7 +64,11 @@ module Fluent
         # NOTE: a plugin must define this because base class doesn't have
         # default implementation.
         def format(tag, time, record)
-            [tag, time, record].to_msgpack
+            if @use_source_timestamp
+                [tag, time, record].to_msgpack
+            else
+                [tag, Fluent::Engine.now, record].to_msgpack
+            end
         end
 
         # This method is called every flush interval.
