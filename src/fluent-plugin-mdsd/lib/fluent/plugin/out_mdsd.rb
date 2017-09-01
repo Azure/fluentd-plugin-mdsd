@@ -64,10 +64,10 @@ module Fluent
         # NOTE: a plugin must define this because base class doesn't have
         # default implementation.
         def format(tag, time, record)
-            if @use_source_timestamp
+            if use_source_timestamp
                 [tag, time, record].to_msgpack
             else
-                [tag, Fluent::Engine.now, record].to_msgpack
+                [tag, Time.now.to_i, record].to_msgpack
             end
         end
 
