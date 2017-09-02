@@ -51,6 +51,8 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 
 - **emit_timestamp_name**: the field name for the event emit time stamp. Default: "FluentdIngestTimestamp".
 
+- **use_source_timestamp**: use the timestamp in the record source. If false, sets the time to Time.now Default: true.
+
 ### Usage
 
 1. Install and configure mdsd. mdsd is a separate component. Please refer to related document.
