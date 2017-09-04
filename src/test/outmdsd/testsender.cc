@@ -143,7 +143,10 @@ RunE2ETest(size_t nitems, size_t nbytesPerItem)
     AddEndOfTestToQueue(incomingQueue);
     nitems++; // end of test message
 
-    bool mockServerDone = mockServer->WaitForTestsDone(1000);
+    // The time it takes the mockServer to proces all msgs can vary depending on
+    // test machine perf. Use a little bigger value to make sure all msgs are
+    // received.
+    bool mockServerDone = mockServer->WaitForTestsDone(3000);
     BOOST_CHECK(mockServerDone);
 
     mockServer->Stop();
