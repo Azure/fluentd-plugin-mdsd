@@ -67,7 +67,7 @@ module Fluent
             if use_source_timestamp
                 [tag, time, record].to_msgpack
             else
-                [tag, Time.now.to_i, record].to_msgpack
+                [tag, record].to_msgpack
             end
         end
 
@@ -76,12 +76,19 @@ module Fluent
         # NOTE! This method is called by internal thread, not Fluentd's main thread.
         # So IO wait doesn't affect other plugins.
         def write(chunk)
-            chunk.msgpack_each {|(tag, time, record)|
-                # Ruby (version >= 1.9) hash preserves insertion order. So the following item is
-                # the last item when iterating the 'record' hash.
-                record[emit_timestamp_name] = Time.at(time)
-                handle_record(tag, record)
-            }
+            if use_source_timestamp
+                chunk.msgpack_each {|(tag, time, record)|
+                    # Ruby (version >= 1.9) hash preserves insertion order. So the following item is
+                    # the last item when iterating the 'record' hash.
+                    record[emit_timestamp_name] = Time.at(time)
+                    handle_record(tag, record)
+                }
+            else
+                chunk.msgpack_each {|(tag, record)|
+                    record[emit_timestamp_name] = Time.now
+                    handle_record(tag, record)
+                }
+            end
             @log.flush
         end
 
