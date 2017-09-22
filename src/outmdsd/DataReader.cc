@@ -87,6 +87,7 @@ DataReader::DoRead(
     }
     catch(const SocketException & ex) {
         Log(TraceLevel::Info, "SocketException " << ex.what());
+        return false;
     }
     return true;
 }
