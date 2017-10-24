@@ -1,7 +1,5 @@
 # This is Linux MDS/Geneva monitoring agent (mdsd) output plugin.
 # The plugin will send data to mdsd agent using Unix socket file.
-
-
 module Fluent
 
     class OutputMdsd < BufferedOutput
@@ -47,6 +45,11 @@ module Fluent
                 resend_interval_ms, conn_retry_timeout_ms)
             @mdsdTagPatterns = mdsd_tag_regex_patterns
             @configured_max_record_size = [max_record_size, MDSD_MAX_RECORD_SIZE].min
+
+            time_packer = Proc.new { |time| [time.to_f].pack("D") }
+            time_unpacker = Proc.new  { |data| Time.at(data.unpack('D')[0]) }
+            MessagePack::DefaultFactory.register_type( 0x7f, Time, packer: time_packer, unpacker: time_unpacker)
+            Fluent::Engine.instance_variable_set("@msgpack_factory", ::MessagePack::DefaultFactory)
         end
 
         # This method is called before starting.
