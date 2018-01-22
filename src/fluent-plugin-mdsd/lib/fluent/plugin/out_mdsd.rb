@@ -40,7 +40,7 @@ module Fluent
             super
 
             Liboutmdsdrb::InitLogger($log.out.path, true)
-            Liboutmdsdrb::SetLogLevel(log_level)
+            Liboutmdsdrb::SetLogLevel($log.level.to_s)
 
             @mdsdMsgMaker = MdsdMsgMaker.new(@log)
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms,
