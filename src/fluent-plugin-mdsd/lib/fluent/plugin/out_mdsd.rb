@@ -275,7 +275,7 @@ class MdsdMsgMaker
         elsif value.nil?
             return "null".dump
         else
-            return value.to_s
+            return value.to_s.dump
         end
     end
 end
