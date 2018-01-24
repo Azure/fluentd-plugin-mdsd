@@ -11,6 +11,10 @@
   or [Fluentd Agent](http://www.fluentd.org/download)
 - [SWIG](http://www.swig.org/) 3.0
 
+or use the dev docker container,  it will take a while to build.
+- windows : ./devenv.ps1 (run at project root)
+- linux/unix/mac: ./devenv.sh (run at project root)
+
 ## How to build the code
 
 Run:

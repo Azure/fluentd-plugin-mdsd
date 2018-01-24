@@ -23,7 +23,7 @@ _gpgorigin: $(DEB)
 $(DEB): tarballs debian-binary
 	-rm -f $@
 	ar rc $@ debian-binary control.tar.gz data.tar.gz
-	lintian $@
+	#lintian $@
 
 $(DOCDIR):
 	mkdir -p $@

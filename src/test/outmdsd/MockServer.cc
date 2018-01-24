@@ -160,7 +160,7 @@ MockServer::PollConnection() const
     pfds[0].events = POLLIN;
 
     int rtn = 0;
-    while( (-1 == (rtn == poll(pfds, 1, -1))) && (EINTR == errno));
+    while( (-1 == (rtn = poll(pfds, 1, -1))) && (EINTR == errno));
     auto errCopy = errno;
     if (rtn < 0) {
         std::error_code ec(errCopy, std::system_category());
