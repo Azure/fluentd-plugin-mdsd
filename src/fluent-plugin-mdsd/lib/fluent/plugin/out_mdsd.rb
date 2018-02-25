@@ -135,6 +135,7 @@ class SchemaManager
         {
             "TrueClass" => "FT_BOOL",
             "FalseClass" => "FT_BOOL",
+            "Integer" => "FT_INT64",
             "Fixnum" => "FT_INT64",
             "Bignum" => "FT_INT64",
             "Float" => "FT_DOUBLE",
