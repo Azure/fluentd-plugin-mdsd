@@ -169,7 +169,7 @@ end
 class MdsdMsgMakerTest < Test::Unit::TestCase
 
     def setup
-        @msg_maker = MdsdMsgMaker.new(nil)
+        @msg_maker = MdsdMsgMaker.new(nil, false)
     end
 
     def test_record()
@@ -214,6 +214,25 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         expectedStr = '1,[3,["arraykey","FT_STRING"],["hashkey","FT_STRING"],["rangekey","FT_STRING"],["emittime","FT_TIME"]],["[1]","{1=>2}","1...4",[123,0]]'
         assert_equal(expectedStr, schemaVal, "get_schema_value_str")
     end
+
+    def test_HashType()
+        @new_msgmkr = MdsdMsgMaker.new(nil, true)
+        record = 
+        {
+            "properties" => {"hello"=>"there"}
+        }
+
+        returnVal = @new_msgmkr.get_schema_value_str(record)
+        puts "returned value '#{returnVal}'"  
+        expectedStr = '1,[0,["properties","FT_STRING"]],["{\"hello\":\"there\"}"]'
+        assert_equal(expectedStr, returnVal, "get_schema_value_str")  
+
+        # send it to msgmkr object with hash_to_json set to false
+        returnVal = @msg_maker.get_schema_value_str(record)
+        expectedStr = '1,[0,["properties","FT_STRING"]],["{\"hello\"=>\"there\"}"]'
+        assert_equal(expectedStr, returnVal, "get_schema_value_str")  
+    end
+        
 
     def test_source_name_creator()
         regex_list = [ "^mdsd\.syslog", "^mdsd\.ext_syslog\.\\w+" ]

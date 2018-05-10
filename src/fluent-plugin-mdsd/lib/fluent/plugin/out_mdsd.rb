@@ -1,6 +1,8 @@
 # This is Linux MDS/Geneva monitoring agent (mdsd) output plugin.
 # The plugin will send data to mdsd agent using Unix socket file.
 
+require "json"
+require "json/ext"
 
 module Fluent
 
@@ -34,6 +36,8 @@ module Fluent
         config_param :use_source_timestamp, :bool, :default => true
         desc "the maximum record size to emit. Cannot exceed #{MDSD_MAX_RECORD_SIZE}"
         config_param :max_record_size, :integer, :default => MDSD_MAX_RECORD_SIZE
+        desc "convert hash type to json string"
+        config_param :convert_hash_to_json, :bool, :default => false
 
         # This method is called before starting.
         def configure(conf)
@@ -42,7 +46,7 @@ module Fluent
             Liboutmdsdrb::InitLogger($log.out.path, true)
             Liboutmdsdrb::SetLogLevel($log.level.to_s)
 
-            @mdsdMsgMaker = MdsdMsgMaker.new(@log)
+            @mdsdMsgMaker = MdsdMsgMaker.new(@log, convert_hash_to_json)
             @mdsdLogger = Liboutmdsdrb::SocketLogger.new(djsonsocket, acktimeoutms,
                 resend_interval_ms, conn_retry_timeout_ms)
             @mdsdTagPatterns = mdsd_tag_regex_patterns
@@ -210,7 +214,8 @@ class SchemaManager
 end
 
 class MdsdMsgMaker
-    def initialize(logger)
+    def initialize(logger, hashtojson)
+        @hashtojson = hashtojson
         @logger = logger
         @schema_mgr = SchemaManager.new(@logger)
     end
@@ -265,17 +270,24 @@ class MdsdMsgMaker
 
     # Get formatted value string accepted by mdsd dynamic json protocol.
     def get_value_by_type(value)
-        if (value.kind_of? String)
+        
+        if (value.kind_of? String)            
             # Use 'dump' to do proper escape.
             return value.dump
-        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)
+        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)                        
             # Treat data structure as a string. Use 'dump' to do proper escape.
-            return value.to_s.dump
+            # If type is json and hashtojson is set to true, then first convert it to json and then use dump for proper escape.
+            if (@hashtojson) && (value.kind_of? Hash)
+                return value.to_json.to_str.dump
+            else
+                return value.to_s.dump
+            end
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
         elsif value.nil?
             return "null".dump
         else
+            puts "Unknown type value:'#{value}'"
             return value.to_s
         end
     end
