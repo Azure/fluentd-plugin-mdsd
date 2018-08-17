@@ -139,6 +139,7 @@ class SchemaManager
         {
             "TrueClass" => "FT_BOOL",
             "FalseClass" => "FT_BOOL",
+            "Integer" => "FT_INT64",
             "Fixnum" => "FT_INT64",
             "Bignum" => "FT_INT64",
             "Float" => "FT_DOUBLE",
@@ -277,7 +278,7 @@ class MdsdMsgMaker
             # Treat data structure as a string. Use 'dump' to do proper escape.
             # If type is json and hashtojson is set to true, then first convert it to json and then use dump for proper escape.
             if (@hashtojson) && (value.kind_of? Hash)
-                return value.to_json.to_str.dump
+                return value.to_json.to_s.dump
             else
                 return value.to_s.dump
             end

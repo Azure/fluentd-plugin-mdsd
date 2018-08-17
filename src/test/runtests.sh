@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script will run all tests.
-
+update-alternatives --install /usr/bin/ld ld /usr/bin/ld.gold 60 
 TotalErrors=0
 
 # Valid ${Target} values are: td (for treasure data), oms (for OMSAgent)
