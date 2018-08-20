@@ -44,8 +44,7 @@ class OutputMdsdTest < Test::Unit::TestCase
 
     def test_configure()
         d = create_driver
-
-        assert_equal("trace", d.instance.log_level, "log_level")
+        
         assert_equal("/tmp/mytestsocket", d.instance.djsonsocket, "djsonsocket")
         assert_equal(1, d.instance.acktimeoutms, "acktimeoutms")
         assert_equal([ "^mdsd.syslog" ], d.instance.mdsd_tag_regex_patterns, "mdsd_tag_regex_patterns")
