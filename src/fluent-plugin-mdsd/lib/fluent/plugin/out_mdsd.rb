@@ -287,7 +287,7 @@ class MdsdMsgMaker
         elsif value.nil?
             return "null".dump
         else
-            puts "Unknown type value:'#{value}'"
+            # puts "Unknown type value:'#{value}'"
             return value.to_s
         end
     end
