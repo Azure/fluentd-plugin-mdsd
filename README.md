@@ -4,7 +4,7 @@
 
 This is fluentd output plugin for Azure Linux monitoring agent (mdsd).  Mdsd is the Linux logging infrastructure for Azure services. It connects various log outputs to Azure monitoring service (Geneva warm path).
 
-The mdsd output plugin is a [buffered fluentd plugin](http://docs.fluentd.org/articles/buffer-plugin-overview).
+The mdsd output plugin is a [buffered fluentd plugin](https://docs.fluentd.org/buffer#overview).
 
 ### Installation
 
