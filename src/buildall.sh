@@ -86,7 +86,7 @@ fi
 FindRubyPath()
 {
     if [ "${Target}" == "td" ]; then
-        if [ -z "/opt/td-agent/embedded/bin" ]; then
+        if [ -d "/opt/td-agent/embedded/bin" ]; then
             RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
             RUBY_BIN_PATH=/opt/td-agent/embedded/bin
         else
