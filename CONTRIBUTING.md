@@ -9,7 +9,7 @@
 - GCC version >= 4.8.4
 - Ruby 2.x with [OMS Linux Agent](https://github.com/Microsoft/OMS-Agent-for-Linux)
   or [Fluentd Agent](http://www.fluentd.org/download)
-- [SWIG](http://www.swig.org/) 3.0
+- [SWIG](http://www.swig.org/) 3.0 for td-agent3 or SWIG 4.0.2 for td-agent4
 
 ## How to build the code
 

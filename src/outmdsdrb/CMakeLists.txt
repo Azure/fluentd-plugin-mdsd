@@ -12,7 +12,7 @@ include_directories(
 add_custom_command(
 PRE_BUILD
 OUTPUT ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb_wrap.cxx
-COMMAND swig3.0 -c++ -ruby ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb.i
+COMMAND swig -c++ -ruby ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb.i
 DEPENDS ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb.i
 )
 

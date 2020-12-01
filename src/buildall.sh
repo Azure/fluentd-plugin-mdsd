@@ -86,8 +86,13 @@ fi
 FindRubyPath()
 {
     if [ "${Target}" == "td" ]; then
-        RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
-        RUBY_BIN_PATH=/opt/td-agent/embedded/bin
+        if [ -d "/opt/td-agent/embedded/bin" ]; then
+            RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
+            RUBY_BIN_PATH=/opt/td-agent/embedded/bin
+        else
+            RubyBaseDir="/opt/td-agent/include/ruby-"
+            RUBY_BIN_PATH=/opt/td-agent/bin
+        fi
     elif [ "${Target}" == "oms" ]; then
         RubyBaseDir="/opt/microsoft/omsagent/ruby/include/ruby-"
         RUBY_BIN_PATH=/opt/microsoft/omsagent/ruby/bin
