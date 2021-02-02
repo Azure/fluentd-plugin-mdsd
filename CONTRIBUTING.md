@@ -11,6 +11,10 @@
   or [Fluentd Agent](http://www.fluentd.org/download)
 - [SWIG](http://www.swig.org/) 3.0 for td-agent3 or SWIG 4.0.2 for td-agent4
 
+or use the dev docker container,  it will take a while to build.
+- windows : ./devenv.ps1 (run at project root)
+- linux/unix/mac: ./devenv.sh (run at project root)
+
 ## How to build the code
 
 Run:
