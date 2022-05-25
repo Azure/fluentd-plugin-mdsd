@@ -1,6 +1,8 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fno-strict-aliasing")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 
+find_package(Boost 1.56 REQUIRED COMPONENTS system unit_test_framework)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/outmdsd
 )
@@ -25,8 +27,8 @@ add_executable(
 target_link_libraries(
     ut_outmdsd
     outmdsd
-    boost_unit_test_framework
-    /usr/lib/x86_64-linux-gnu/libboost_system.a
+    Boost::unit_test_framework
+    Boost::system
 )
 
 add_executable(

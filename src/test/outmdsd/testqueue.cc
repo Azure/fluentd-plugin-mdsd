@@ -1,4 +1,5 @@
 #include <boost/test/unit_test.hpp>
+#include <thread>
 #include <future>
 #include <ConcurrentQueue.h>
 #include "testutil.h"
