@@ -1,0 +1,10 @@
+.vscode/settings.json
+src/builddir
+src/builddir.*/
+src/debpkg/
+src/outmdsdrb/outmdsdrb_wrap.cxx
+src/fluent-plugin-mdsd/LICENSE.txt
+src/fluent-plugin-mdsd/lib/fluent/plugin/Liboutmdsdrb.so
+src/fluent-plugin-mdsd/lib/fluent/plugin/Liboutmdsdrb.so
+src/fluent-plugin-mdsd/README.md
+src/fluent-plugin-mdsd/fluent-plugin-mdsd.gemspec
