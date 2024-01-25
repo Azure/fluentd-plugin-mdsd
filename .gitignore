@@ -1,0 +1,5 @@
+build
+builddir
+builddir.*
+.vscode
+*.bak
