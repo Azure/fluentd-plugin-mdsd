@@ -15,9 +15,9 @@ BuildName=dev
 Target=td
 
 # The full path directory containing ruby headers (e.g. 'ruby.h')
-RUBY_INC_PATH=
+RUBY_INC_PATH=/usr/include/ruby
 # The full path directory containing ruby bin (e.g. 'ruby', 'gem', etc)
-RUBY_BIN_PATH=
+RUBY_BIN_PATH=/usr/bin
 
 Usage()
 {
