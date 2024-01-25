@@ -15,9 +15,9 @@ BuildName=dev
 Target=td
 
 # The full path directory containing ruby headers (e.g. 'ruby.h')
-RUBY_INC_PATH=/usr/include/ruby
+RUBY_INC_PATH=
 # The full path directory containing ruby bin (e.g. 'ruby', 'gem', etc)
-RUBY_BIN_PATH=/usr/bin
+RUBY_BIN_PATH=
 
 Usage()
 {
@@ -26,7 +26,7 @@ Usage()
     echo "    -d: build debug build."
     echo "    -h: help."
     echo "    -o: build optimized(release) build."
-    echo "    -t: fluentd target ('td' or 'oms')"
+    echo "    -t: fluentd target ('system', 'td' or 'oms')"
 }
 
 if [ "$#" == "0" ]; then
@@ -73,8 +73,8 @@ for i; do
     esac
 done
 
-if [ "${Target}" != "td" ] && [ "${Target}" != "oms" ]; then
-    echo "Error: invalid -t value. Expected: 'td' or 'oms'"
+if [ "${Target}" != "system" ] && [ "${Target}" != "td" ] && [ "${Target}" != "oms" ]; then
+    echo "Error: invalid -t value. Expected: 'system', 'td' or 'oms'"
     exit 1
 fi
 
@@ -85,6 +85,7 @@ fi
 
 FindRubyPath()
 {
+    # The full path directory containing ruby bin (e.g. 'ruby', 'gem', etc)
     if [ "${Target}" == "td" ]; then
         if [ -d "/opt/td-agent/embedded/bin" ]; then
             RubyBaseDir="/opt/td-agent/embedded/include/ruby-"
@@ -96,14 +97,19 @@ FindRubyPath()
     elif [ "${Target}" == "oms" ]; then
         RubyBaseDir="/opt/microsoft/omsagent/ruby/include/ruby-"
         RUBY_BIN_PATH=/opt/microsoft/omsagent/ruby/bin
+    elif [ "${Target}" == "system" ]; then
+        RUBY_BIN_PATH=/usr/bin
+        RUBY_INC_PATH=/usr/include/ruby
     else
         echo "FindRubyPath() error: unexpected target ${Target}."
         exit 1
     fi
 
-    for diritem in "${RubyBaseDir}"*; do
-        [ -d "${diritem}" ] && RUBY_INC_PATH="${diritem}" && break
-    done
+    if [ -z "${RUBY_INC_PATH}" ]; then
+        for diritem in "${RubyBaseDir}"*; do
+            [ -d "${diritem}" ] && RUBY_INC_PATH="${diritem}" && break
+        done
+    fi
 
     if [ -z "${RUBY_INC_PATH}" ]; then
         echo "Error: failed to get value for RUBY_INC_PATH."
