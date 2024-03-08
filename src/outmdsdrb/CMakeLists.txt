@@ -6,21 +6,27 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -stat
 include_directories(
     ${CMAKE_SOURCE_DIR}/outmdsd
     ${RUBY_INC_PATH}
-    ${RUBY_INC_PATH}/x86_64-linux
+    ${RUBY_INC_PATH}/${CMAKE_SYSTEM_PROCESSOR}-linux
 )
 
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 add_custom_command(
 PRE_BUILD
 OUTPUT ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb_wrap.cxx
 COMMAND swig -c++ -ruby ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb.i
 DEPENDS ${CMAKE_SOURCE_DIR}/outmdsdrb/outmdsdrb.i
 )
+endif()
 
 set(SOURCES
-    wrap_memcpy.c
-    outmdsdrb_wrap.cxx
     outmdsd_log.cxx
 )
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+list(APPEND SOURCES
+    wrap_memcpy.c
+    outmdsdrb_wrap.cxx
+)
+endif()
 
 set(LIB_NAME outmdsdrb)
 
