@@ -131,7 +131,7 @@ BuildWithCMake()
 
     cmake -DCMAKE_C_COMPILER=${CCompiler} -DCMAKE_CXX_COMPILER=${CXXCompiler} \
           -DRUBY_INC_PATH=${RUBY_INC_PATH} \
-          -DFLUENTD_TARGET=${TARGET} \
+          -DFLUENTD_TARGET=${Target} \
           -DCMAKE_BUILD_TYPE=${BuildType} ../
 
     if [ $? != 0 ]; then

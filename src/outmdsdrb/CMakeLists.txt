@@ -1,7 +1,10 @@
-# To force using memcpy@GLIBC_2.2.5 (for old Linux distro versions)
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--wrap=memcpy")
-# To avoid GLIBCXX_3.4.(high) version issue, statically link to libstdc++ & libgcc
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+if(NOT "${FLUENTD_TARGET}" STREQUAL "system")
+    # To force using memcpy@GLIBC_2.2.5 (for old Linux distro versions)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--wrap=memcpy")
+    # To avoid GLIBCXX_3.4.(high) version issue, statically link to libstdc++ & libgcc
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(LIB_NAME outmdsdrb)
@@ -19,7 +22,7 @@ include_directories(
 set(SOURCES
     outmdsd_log.cxx
 )
-if(NOT ${FLUENTD_TARGET} system)
+if(NOT "${FLUENTD_TARGET}" STREQUAL "system")
     list(APPEND SOURCES
         wrap_memcpy.c
     )
