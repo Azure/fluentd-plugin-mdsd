@@ -3,8 +3,8 @@ Gem::Specification.new do |s|
     s.version = "GEMVERSION"
     s.summary = "Fluentd output plugin for Linux monitoring agent (mdsd)"
     s.description = "Fluentd output plugin for Linux monitoring agent(mdsd), which sends data to Azure Geneva service."
-    s.authors = ["Liwei Peng"]
-    s.email = ["Liwei.Peng@microsoft.com"]
+    s.authors = [""]
+    s.email = [""]
     s.extra_rdoc_files = [
       "LICENSE.txt",
       "README.md"
@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
     s.homepage = "https://github.com/Azure/fluentd-plugin-mdsd/"
     s.license = "MIT"
 
-    s.add_dependency "fluentd", "~> 0.12.0"
+    s.add_dependency "fluentd", "FLUENTDVERSIONSPEC"
     s.add_development_dependency "rake"
     s.add_development_dependency "test-unit", "~> 3.0.9"
 end
