@@ -3,3 +3,5 @@ builddir
 builddir.*
 .vscode
 *.bak
+src/debpkg
+fluent-plugin-mdsd.gemspec
