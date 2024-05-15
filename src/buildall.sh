@@ -99,7 +99,7 @@ FindRubyPath()
         RUBY_BIN_PATH=/opt/microsoft/omsagent/ruby/bin
     elif [ "${Target}" == "system" ]; then
         RUBY_BIN_PATH=/usr/bin
-        RUBY_INC_PATH=/usr/include/ruby
+        RUBY_INC_PATH=/usr/include
     else
         echo "FindRubyPath() error: unexpected target ${Target}."
         exit 1
