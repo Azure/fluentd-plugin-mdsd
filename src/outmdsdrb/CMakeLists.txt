@@ -25,9 +25,11 @@ include_directories(
 set(SOURCES
     outmdsd_log.cxx
 )
-list(APPEND SOURCES
-    wrap_memcpy.c
-)
+if(NOT ${FLUENTD_TARGET} system)
+    list(APPEND SOURCES
+        wrap_memcpy.c
+    )
+endif()
 
 set(LIB_NAME outmdsdrb)
 

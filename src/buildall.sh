@@ -131,6 +131,7 @@ BuildWithCMake()
 
     cmake -DCMAKE_C_COMPILER=${CCompiler} -DCMAKE_CXX_COMPILER=${CXXCompiler} \
           -DRUBY_INC_PATH=${RUBY_INC_PATH} \
+          -DFLUENTD_TARGET=${TARGET} \
           -DCMAKE_BUILD_TYPE=${BuildType} ../
 
     if [ $? != 0 ]; then
@@ -199,8 +200,15 @@ CreateGemFile()
     cp -f ../../LICENSE.txt ../../README.md .
 
     sed "s/GEMVERSION/${Version}/g" gemspec-template > fluent-plugin-mdsd.gemspec
-    echo ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
-    ${RUBY_BIN_PATH}/fluent-gem build fluent-plugin-mdsd.gemspec
+
+    # If Target is 'system', then use gem to build the gem file. Otherwise, use fluent-gem.
+    GEM_BIN=${RUBY_BIN_PATH}/fluent-gem
+    if [ "${Target}" == "system" ]; then
+        GEM_BIN=gem
+    fi
+
+    echo ${GEM_BIN} build fluent-plugin-mdsd.gemspec
+    ${GEM_BIN} build fluent-plugin-mdsd.gemspec
     if [ $? != 0 ]; then
         let TotalErrors+=1
         echo Error: CreateGemFile failed
@@ -227,7 +235,9 @@ echo Start build at `date`. BuildType=${BuildType} CC=${CCompiler} Target=${Targ
 
 FindRubyPath
 BuildWithCMake
-ParseGlibcVer
+if [ "${Target}" != "system" ]; then
+    ParseGlibcVer
+fi
 CreateGemFile
 ReleaseGemFile
 
