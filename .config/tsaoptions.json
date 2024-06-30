@@ -1,0 +1,12 @@
+{
+   "instanceUrl"        :  "https://msazure.visualstudio.com",
+   "projectName"        :  "One", 
+   "areaPath"           :  "One\\EngSys\\Monitoring and Diagnostics\\CloudAgent\\Linux", 
+   "notificationAliases":  [
+                             "dmitmatv@microsoft.com",
+                             "glinuxagent@microsoft.com"
+                           ],
+   "ppe"                :  "false",
+   "template"           :  "TFSMSAzureDev",
+   "codebaseName"       :  "Compute-Runtime-Tux-fluentd-plugin-mdsd"
+ }
