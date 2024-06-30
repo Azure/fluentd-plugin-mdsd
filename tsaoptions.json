@@ -8,5 +8,5 @@
                            ],
    "ppe"                :  "false",
    "template"           :  "TFSMSAzureDev",
-   "codebaseName"       :  "Compute-Runtime-Tux-lad"
+   "codebaseName"       :  "Compute-Runtime-Tux-fluentd-plugin-mdsd"
  }
