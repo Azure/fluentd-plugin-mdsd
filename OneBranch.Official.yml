@@ -64,14 +64,14 @@ extends:
       tsa:
        enabled: true # SDL results of non-official builds aren't uploaded to TSA by default.
       credscan:
-        suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
+        suppressionsFile: $(Build.SourcesDirectory)\CredScanSuppressions.json
       policheck:
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-        exclusionsFile: $(Build.SourcesDirectory)\.config\PolicheckExclusion.xml
+        exclusionsFile: $(Build.SourcesDirectory)\PolicheckExclusion.xml
       baseline:
-        baselineFile: $(Build.SourcesDirectory)\.gdn\global.gdnbaselines
+        baselineFile: $(Build.SourcesDirectory)\global.gdnbaselines
       suppression:
-        suppressionFile: $(Build.SourcesDirectory)\.gdn\global.gdnsuppress
+        suppressionFile: $(Build.SourcesDirectory)\global.gdnsuppress
       cg:
         ignoreDirectories: azure-linux-extensions/OpenCensusAgent,rsyslog-legacy
       codeql:
