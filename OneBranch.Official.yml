@@ -96,6 +96,6 @@ extends:
             inputs:
               script: |
                 cd src
-                ./buildall.sh -b master -t td
+                ./buildall.sh -b master -o -t td
               workingDirectory: '$(Build.SourcesDirectory)'
 
