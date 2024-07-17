@@ -95,6 +95,7 @@ extends:
             displayName: 'Build'
             inputs:
               script: |
-                ls $(Build.SourcesDirectory)
+                cd src
+                ./buildall.sh -b master -t td
               workingDirectory: '$(Build.SourcesDirectory)'
 
