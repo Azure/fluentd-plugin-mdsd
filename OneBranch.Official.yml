@@ -96,6 +96,7 @@ extends:
             inputs:
               script: |
                 sudo yum install -y ruby
+                sudo yum install -y swig
                 cd src
                 ./buildall.sh -b master -o -t system
               workingDirectory: '$(Build.SourcesDirectory)'
