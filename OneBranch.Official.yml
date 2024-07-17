@@ -95,7 +95,8 @@ extends:
             displayName: 'Build'
             inputs:
               script: |
+                sudo yum install ruby
                 cd src
-                ./buildall.sh -b master -o -t td
+                ./buildall.sh -b master -o -t system
               workingDirectory: '$(Build.SourcesDirectory)'
 
