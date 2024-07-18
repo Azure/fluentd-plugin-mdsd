@@ -95,7 +95,7 @@ extends:
             displayName: 'Build'
             inputs:
               script: |
-                sudo yum install -y ruby swig boost boost-devel                
+                sudo yum install -y ruby swig boost boost-devel libboost-test libboost-system devtoolset-8-gcc devtoolset-8-gcc-c++ cmake             
                 cd src
                 ./buildall.sh -b master -o -t system
               workingDirectory: '$(Build.SourcesDirectory)'
