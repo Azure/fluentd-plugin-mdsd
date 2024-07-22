@@ -95,8 +95,12 @@ extends:
             displayName: 'Build'
             inputs:
               script: |
-                sudo yum install -y ruby swig boost boost-devel libboost-test libboost-system devtoolset-8-gcc devtoolset-8-gcc-c++ cmake             
+                tdnf -y -q upgrade
+                tdnf -y -q install ca-certificates libyaml libedit libxcrypt util-linux tar sudo git build-essential ruby cmake boost-devel boost-static swig python3-pip cyrus-sasl
+                update-alternatives --install /usr/bin/python python /usr/bin/python3.9 2
                 cd src
-                ./buildall.sh -b master -o -t system
+                sed -i /^ParseGlibcVer$/d ./buildall.sh
+                sed -i /^BuildWithMake\ debpkg$/d ./buildall.sh
+                ./buildall.sh -o -t system                
               workingDirectory: '$(Build.SourcesDirectory)'
 
