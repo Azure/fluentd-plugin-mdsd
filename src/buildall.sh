@@ -200,7 +200,7 @@ CreateGemFile()
     cp -f ../../LICENSE.txt ../../README.md .
 
     if [ "${Target}" == "system" ]; then
-        FluentDVersionSpec="~> 1.16.5"
+        FluentDVersionSpec=">= 1.16, < 2.0"
     else
         FluentDVersionSpec="~> 0.12.0"
     fi
