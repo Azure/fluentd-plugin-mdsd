@@ -179,8 +179,12 @@ ParseGlibcVer()
     glibcver=2.9  # max GLIBC version to support
     dirname=./${BUILDDIR}/release/lib
     echo
-    echo python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
-    python ./test/parseglibc.py -d ${dirname} -v ${glibcver}
+    PYTHON=python
+    if [ -z "$(which ${PYTHON} 2> /dev/null )" ]; then
+        PYTHON=python3
+    fi
+    echo ${PYTHON} ./test/parseglibc.py -d ${dirname} -v ${glibcver}
+    ${PYTHON} ./test/parseglibc.py -d ${dirname} -v ${glibcver}
     if [ $? != 0 ]; then
         let TotalErrors+=1
         echo Error: ParseGlibcVer failed: maximum supported GLIBC version is ${glibcver}.
