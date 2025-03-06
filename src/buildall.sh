@@ -199,12 +199,7 @@ CreateGemFile()
     cp -f ../builddir/release/lib/Liboutmdsdrb.so ./lib/fluent/plugin/Liboutmdsdrb.so
     cp -f ../../LICENSE.txt ../../README.md .
 
-    if [ "${Target}" == "system" ]; then
-        FluentDVersionSpec=">= 1.16"
-    else
-        FluentDVersionSpec="~> 0.12.0"
-    fi
-    sed "s/GEMVERSION/${Version}/g; s/FLUENTDVERSIONSPEC/${FluentDVersionSpec}/g" gemspec-template > fluent-plugin-mdsd.gemspec
+    sed "s/GEMVERSION/${Version}/g" gemspec-template > fluent-plugin-mdsd.gemspec
 
     # If Target is 'system', then use gem to build the gem file. Otherwise, use fluent-gem.
     GEM_BIN=${RUBY_BIN_PATH}/fluent-gem
