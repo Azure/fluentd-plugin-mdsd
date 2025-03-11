@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <stdexcept>
 
 namespace EndpointLog {
 
