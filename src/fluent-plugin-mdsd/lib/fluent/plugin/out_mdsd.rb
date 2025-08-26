@@ -271,21 +271,21 @@ class MdsdMsgMaker
     # Get formatted value string accepted by mdsd dynamic json protocol.
     def get_value_by_type(value)
         
-        if (value.kind_of? String)            
-            # Use 'dump' to do proper escape.
-            return value.dump
-        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)                        
-            # Treat data structure as a string. Use 'dump' to do proper escape.
-            # If type is json and hashtojson is set to true, then first convert it to json and then use dump for proper escape.
+        if (value.kind_of? String)
+            # Use JSON.generate for proper JSON escaping, especially for control characters
+            return JSON.generate(value)
+        elsif (value.kind_of? Array) || (value.kind_of? Hash) || (value.kind_of? Range)
+            # Treat data structure as a string. Use JSON.generate for proper JSON escaping.
+            # If type is json and hashtojson is set to true, then first convert it to json and then use JSON.generate for proper escape.
             if (@hashtojson) && (value.kind_of? Hash)
-                return value.to_json.to_s.dump
+                return JSON.generate(value.to_json.to_s)
             else
-                return value.to_s.dump
+                return JSON.generate(value.to_s)
             end
         elsif (value.kind_of? Time)
             return ('[' + value.tv_sec.to_s + "," + value.tv_nsec.to_s + ']')
         elsif value.nil?
-            return "null".dump
+            return JSON.generate("null")
         else
             # puts "Unknown type value:'#{value}'"
             return value.to_s
