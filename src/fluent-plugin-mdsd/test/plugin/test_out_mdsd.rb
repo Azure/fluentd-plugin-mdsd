@@ -267,4 +267,61 @@ class MdsdMsgMakerTest < Test::Unit::TestCase
         }
     end
 
+    def test_control_characters_escaping()
+        # Test that control characters are properly escaped for round-trip JSON parsing
+        # This test demonstrates the bug where Ruby's dump method doesn't properly escape
+        # control characters for JSON parsing, causing data corruption downstream
+        
+        test_cases = [
+            {
+                name: "null_byte",
+                input: "hello\x00world",
+                description: "null byte should be escaped as \\u0000"
+            },
+            {
+                name: "control_chars",
+                input: "data\x01\x02\x03end",
+                description: "control characters should use unicode escapes"
+            },
+            {
+                name: "vertical_tab",
+                input: "hello\x0Bworld",
+                description: "vertical tab should be escaped as \\u000b"
+            },
+            {
+                name: "escape_char",
+                input: "hello\x1Bworld",
+                description: "escape character should be escaped as \\u001b"
+            }
+        ]
+
+        test_cases.each do |test_case|
+            record = { test_case[:name] => test_case[:input] }
+            schema_val = @msg_maker.get_schema_value_str(record)
+            
+            # Extract the values part: schema_id,schema,[values]
+            # The format is: 1,[0,["key","FT_STRING"]],["value"]
+            # We want just the last part: ["value"]
+            last_comma_bracket = schema_val.rindex(',[')
+            assert_not_nil(last_comma_bracket, "Should find values array for #{test_case[:name]}")
+            
+            values_part = schema_val[last_comma_bracket + 1..-1]  # Skip the comma, keep the bracket
+            
+            # Parse the JSON to verify round-trip works correctly
+            begin
+                parsed = JSON.parse(values_part)
+                parsed_value = parsed[0]
+                
+                # This is the critical test: the parsed value must exactly match the original
+                assert_equal(test_case[:input], parsed_value,
+                    "Round-trip failed for #{test_case[:name]}: #{test_case[:description]}. " +
+                    "Original: #{test_case[:input].inspect}, Parsed: #{parsed_value.inspect}")
+                    
+            rescue JSON::ParserError => e
+                flunk("JSON parsing failed for #{test_case[:name]}: #{e.message}. " +
+                      "Values part: #{values_part}")
+            end
+        end
+    end
+
 end
