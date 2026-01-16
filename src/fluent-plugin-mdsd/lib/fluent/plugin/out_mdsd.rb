@@ -144,6 +144,7 @@ class SchemaManager
             "Bignum" => "FT_INT64",
             "Float" => "FT_DOUBLE",
             "Time" => "FT_TIME",
+            "Fluent::EventTime" => "FT_TIME",
             "String" => "FT_STRING"
         }
 
