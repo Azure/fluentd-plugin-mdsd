@@ -4,8 +4,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
 set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs and
 set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
-# Find Boost 1.56 or higher
-find_package(Boost 1.56 REQUIRED COMPONENTS system unit_test_framework)
+# Find Boost 1.55 or higher
+find_package(Boost 1.55 REQUIRED COMPONENTS system unit_test_framework)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/outmdsd

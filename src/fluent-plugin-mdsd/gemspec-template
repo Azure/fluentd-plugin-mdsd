@@ -15,15 +15,18 @@ Gem::Specification.new do |s|
       "README.md",
       "Rakefile",
       "lib/fluent/plugin/out_mdsd.rb",
+      "lib/fluent/plugin/mdsd_chunk_plan.rb",
+      "lib/fluent/plugin/mdsd_chunk_quarantine.rb",
       "lib/fluent/plugin/Liboutmdsdrb.so",
       "fluent-plugin-mdsd.gemspec",
       "out_mdsd_sample.conf",
-      "test/plugin/test_out_mdsd.rb"
+      "test/plugin/test_out_mdsd.rb",
+      "test/plugin/test_corrupt_chunks.rb"
     ]
     s.homepage = "https://github.com/Azure/fluentd-plugin-mdsd/"
     s.license = "MIT"
 
     s.add_dependency "fluentd"
     s.add_development_dependency "rake"
-    s.add_development_dependency "test-unit", "~> 3.0.9"
+    s.add_development_dependency "test-unit", ">= 3.0.9", "< 4.0"
 end

@@ -56,6 +56,31 @@ The mdsd output plugin is a buffered fluentd plugin. Besides supporting all the 
 - **convert_hash_to_json**: if this is set to true, then plugin will convert hash string to proper json before sending to mdsd. 
   Input record with hash  {key => {"X"=>"Y"}} will be tranformed to {key => {"X":"Y"}}
 
+### Invalid buffered events
+
+The output validates the entire chunk before sending. With
+`invalid_event_action backup` (the default), it reports the chunk ID, reason and
+byte offset explicitly and leaves secondary/whole-chunk backup to Fluentd; a
+valid prefix is not partially sent first.
+
+Selective quarantine requires `invalid_event_action quarantine`, an explicit
+output `@id`, and an absolute `quarantine_path` on a private persistent filesystem
+supporting file and directory `fsync`. It atomically retains the full original
+logical chunk and a SHA-256/byte-range manifest before sending well-framed valid
+events. Missing source timestamps are retained, never replaced with the current
+time. Legitimate NUL bytes in valid payloads are preserved. Undecodable or
+incomplete MessagePack, or the 1024-rejected-range safety limit, quarantines the
+entire chunk without delivery or guessed resynchronization.
+
+Persistence failures are retryable before delivery. Transport retries can still
+duplicate valid events; quarantine entries themselves are idempotent for an
+unchanged chunk ID/content/mode. Archives require operator-managed capacity,
+retention and reviewed recovery; no automatic deletion/replay occurs. This does
+not prevent original corruption, reconstruct overwritten bytes, or prove cloud
+delivery. For the full policy, example and operational requirements, see
+[the repository README](../../README.md#invalid-buffered-events), which is copied
+into the built gem.
+
 ### Usage
 
 1. Install and configure mdsd. mdsd is a separate component. Please refer to related document.
