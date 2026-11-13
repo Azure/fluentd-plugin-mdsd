@@ -3,6 +3,9 @@
 
 require "json"
 require "json/ext"
+require "pathname"
+require_relative "mdsd_chunk_plan"
+require_relative "mdsd_chunk_quarantine"
 
 module Fluent
 
@@ -38,10 +41,16 @@ module Fluent
         config_param :max_record_size, :integer, :default => MDSD_MAX_RECORD_SIZE
         desc "convert hash type to json string"
         config_param :convert_hash_to_json, :bool, :default => false
+        desc "handling of invalid buffered events: whole-chunk backup or selective durable quarantine"
+        config_param :invalid_event_action, :enum, :list => [:backup, :quarantine], :default => :backup
+        desc "absolute directory for durable quarantine; requires invalid_event_action quarantine and an explicit @id"
+        config_param :quarantine_path, :string, :default => nil
 
         # This method is called before starting.
         def configure(conf)
             super
+
+            configure_chunk_quarantine(conf)
 
             Liboutmdsdrb::InitLogger($log.out.path, true)
             Liboutmdsdrb::SetLogLevel($log.level.to_s)
@@ -80,15 +89,36 @@ module Fluent
         # NOTE! This method is called by internal thread, not Fluentd's main thread.
         # So IO wait doesn't affect other plugins.
         def write(chunk)
+            plan = MdsdChunkPlan.new(chunk.read, use_source_timestamp)
+            if plan.invalid?
+                chunk_id = chunk.unique_id.unpack("H*").first
+                if invalid_event_action == :quarantine
+                    begin
+                        location = @chunk_quarantine.persist(chunk.unique_id, plan)
+                    rescue MdsdChunkQuarantine::PersistenceError => error
+                        @log.error "MDSD quarantine failed; no events sent", :chunk_id => chunk_id, :error => error
+                        raise
+                    end
+                    @log.error "MDSD buffered corruption quarantined",
+                        :chunk_id => chunk_id, :path => location,
+                        :validated_events => plan.valid_events, :deliverable_events => plan.deliverable_events,
+                        :rejected_ranges => plan.rejected_ranges.length
+                else
+                    first = plan.rejected_ranges.first
+                    message = "invalid MDSD buffered chunk #{chunk_id}: #{first["reason"]} at byte #{first["offset"]}; no events sent"
+                    @log.error message
+                    raise ArgumentError, message
+                end
+            end
             if use_source_timestamp
-                chunk.msgpack_each {|(tag, time, record)|
+                plan.each_event {|(tag, time, record)|
                     # Ruby (version >= 1.9) hash preserves insertion order. So the following item is
                     # the last item when iterating the 'record' hash.
                     record[emit_timestamp_name] = Time.at(time)
                     handle_record(tag, record)
                 }
             else
-                chunk.msgpack_each {|(tag, record)|
+                plan.each_event {|(tag, record)|
                     record[emit_timestamp_name] = Time.now
                     handle_record(tag, record)
                 }
@@ -97,6 +127,22 @@ module Fluent
         end
 
 private
+        def configure_chunk_quarantine(conf)
+            if invalid_event_action == :quarantine
+                unless quarantine_path && Pathname.new(quarantine_path).absolute? &&
+                        conf["@id"] && !conf["@id"].empty?
+                    raise ConfigError, "MDSD selective quarantine requires an absolute quarantine_path and an explicit @id"
+                end
+                worker_id = ENV.fetch("SERVERENGINE_WORKER_ID", "0")
+                unless /\A[0-9]+\z/.match(worker_id)
+                    raise ConfigError, "MDSD quarantine requires a numeric SERVERENGINE_WORKER_ID"
+                end
+                @chunk_quarantine = MdsdChunkQuarantine.new(File.expand_path(quarantine_path), conf["@id"], worker_id.to_i)
+            elsif quarantine_path
+                raise ConfigError, "quarantine_path requires invalid_event_action quarantine"
+            end
+        end
+
         # Handle a regular record, which is hash of key, value pairs.
         # NOTE: not all types are supported. The supported data types are
         # defined in SchemaManager class.

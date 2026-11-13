@@ -2,7 +2,7 @@
 
 ## Install required software
 
-- CMake version >= 2.8.12
+- CMake version >= 3.0
 - Boost unit test version 1.55 (libboost-test)
   NOTE: other version of libboost-test may not work.
 - Boost system library version 1.55 (libboost-system)
@@ -30,6 +30,39 @@ cd src/builddir/release/tests
 ```
 
 Check logs in *.log if any error.
+
+### Buffered-corruption regression tests
+
+After generating the gem specification and making the native library available
+as described above, run the focused Ruby tests from `src/fluent-plugin-mdsd`:
+
+```bash
+bundle exec ruby -rfluent/output -Ilib test/plugin/test_corrupt_chunks.rb
+```
+
+These tests exercise the production `write`, real Fluentd file-buffer
+flush/backup/retry behavior, rejection-range limits, and concurrent quarantine
+publication with a captured transport. They do not require the C++ mock server
+or a live MDSD destination. Native socket integration remains a separate
+validation. The development `test-unit` constraint permits newer 3.x releases
+because 3.0.x cannot load on Ruby 3.x. The corruption/flush suite targets
+Fluentd 1.x.
+
+### Validated build and test profiles
+
+The clean native build, full native and packaged Ruby tests, and local gem
+installation have been exercised with:
+
+| Ruby | Fluentd | Boost |
+| --- | --- | --- |
+| 2.7.8 | 1.16.11 | 1.55.0 |
+| 3.3.5 | 1.19.3 | 1.56.0 |
+
+Both profiles used GCC 10.2.1, CMake 3.18.4 and SWIG 4.0.2. These standalone
+validations used the `system` build target and matching Ruby/Fluentd executables
+for the test runner. They do not certify every version accepted by the unpinned
+Fluentd dependency, OMS/td-agent distribution packages, or the legacy
+GLIBC <= 2.9 binary compatibility gate.
 
 ## Overview of mdsd plugin design and code structure
 
